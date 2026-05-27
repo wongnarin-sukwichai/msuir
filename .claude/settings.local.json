@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"</div>$\\\\|</template>\" \"c:/xampp/htdocs/msuir/resources/js/pages/Item.vue\")"
+    ]
+  }
+}
