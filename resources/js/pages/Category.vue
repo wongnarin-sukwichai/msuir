@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PublicLayout from '@/layouts/PublicLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 // --- Types ---
@@ -196,9 +196,9 @@ const activeFilterCount = computed(() => selectedYears.value.length + selectedFa
             <div class="px-4 py-3 mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <ol class="flex items-center space-x-2 text-sm">
                     <li>
-                        <a href="/" class="font-medium transition-colors text-slate-500 hover:text-blue-800">
+                        <Link href="/" class="font-medium transition-colors text-slate-500 hover:text-blue-800">
                             <i class="fas fa-home mr-1.5 text-xs"></i>หน้าแรก
-                        </a>
+                        </Link>
                     </li>
                     <li><i class="fas fa-chevron-right text-[9px] text-slate-300"></i></li>
                     <li>
@@ -447,9 +447,10 @@ const activeFilterCount = computed(() => selectedYears.value.length + selectedFa
 
                     <!-- LIST VIEW -->
                     <div v-if="viewMode === 'list'" class="space-y-4">
-                        <article
+                        <Link
                             v-for="item in items"
                             :key="item.id"
+                            :href="route('item.show', item.id)"
                             class="group flex gap-5 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-md cursor-pointer"
                         >
                             <!-- Thumbnail / Icon -->
@@ -506,25 +507,26 @@ const activeFilterCount = computed(() => selectedYears.value.length + selectedFa
                                         </span>
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <button class="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-[#1e3a8a]">
+                                        <span class="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-[#1e3a8a]">
                                             <i class="fas fa-info-circle text-[10px]"></i>
                                             รายละเอียด
-                                        </button>
-                                        <button class="flex items-center gap-1.5 rounded-lg bg-[#1e3a8a] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-800 active:scale-95">
+                                        </span>
+                                        <button @click.prevent class="flex items-center gap-1.5 rounded-lg bg-[#1e3a8a] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-800 active:scale-95">
                                             <i class="fas fa-download text-[10px]"></i>
                                             ดาวน์โหลด
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                        </article>
+                        </Link>
                     </div>
 
                     <!-- GRID VIEW -->
                     <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <article
+                        <Link
                             v-for="item in items"
                             :key="item.id"
+                            :href="route('item.show', item.id)"
                             class="group flex flex-col rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-md cursor-pointer"
                         >
                             <div class="flex items-start justify-between gap-3 mb-4">
@@ -543,12 +545,12 @@ const activeFilterCount = computed(() => selectedYears.value.length + selectedFa
                             </div>
                             <div class="flex items-center justify-between pt-4 mt-4 border-t border-slate-50">
                                 <span class="text-xs text-slate-400"><i class="mr-1 fas fa-download text-slate-300"></i>{{ item.downloads }}</span>
-                                <button class="flex items-center gap-1.5 rounded-lg bg-[#1e3a8a] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-blue-800 active:scale-95">
+                                <span class="flex items-center gap-1.5 rounded-lg bg-[#1e3a8a] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-blue-800">
                                     <i class="fas fa-external-link-alt text-[9px]"></i>
                                     ดูรายละเอียด
-                                </button>
+                                </span>
                             </div>
-                        </article>
+                        </Link>
                     </div>
 
                     <!-- ===== PAGINATION ===== -->

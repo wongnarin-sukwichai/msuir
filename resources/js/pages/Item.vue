@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PublicLayout from '@/layouts/PublicLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 // --- Types ---
@@ -133,9 +133,9 @@ const copyCitation = async (type: string, text: string) => {
         <div class="bg-white border-b border-slate-100">
             <div class="px-4 py-3 mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <ol class="flex flex-wrap items-center gap-2 text-sm">
-                    <li><a href="/" class="font-medium transition-colors text-slate-500 hover:text-blue-800"><i class="fas fa-home mr-1.5 text-xs"></i>หน้าแรก</a></li>
+                    <li><Link href="/" class="font-medium transition-colors text-slate-500 hover:text-blue-800"><i class="fas fa-home mr-1.5 text-xs"></i>หน้าแรก</Link></li>
                     <li><i class="fas fa-chevron-right text-[9px] text-slate-300"></i></li>
-                    <li><a href="/category" class="font-medium transition-colors text-slate-500 hover:text-blue-800">{{ item.category.name }}</a></li>
+                    <li><Link :href="route('category.show', 1)" class="font-medium transition-colors text-slate-500 hover:text-blue-800">{{ item.category.name }}</Link></li>
                     <li><i class="fas fa-chevron-right text-[9px] text-slate-300"></i></li>
                     <li class="max-w-xs truncate font-bold text-[#1e3a8a]">{{ item.title.slice(0, 50) }}...</li>
                 </ol>
@@ -483,10 +483,10 @@ const copyCitation = async (type: string, text: string) => {
                             <h2 class="text-base font-black text-slate-900">ผลงานที่เกี่ยวข้อง</h2>
                         </div>
                         <div class="space-y-3">
-                            <a
+                            <Link
                                 v-for="related in relatedItems"
                                 :key="related.id"
-                                href="#"
+                                :href="route('item.show', related.id)"
                                 class="flex items-start gap-4 p-4 transition-all border group rounded-xl border-slate-100 hover:border-blue-100 hover:bg-blue-50/30"
                             >
                                 <div class="flex items-center justify-center w-8 h-10 transition rounded-lg shrink-0 bg-slate-100 text-slate-300 group-hover:bg-blue-100 group-hover:text-blue-400">
@@ -497,7 +497,7 @@ const copyCitation = async (type: string, text: string) => {
                                     <p class="mt-1 text-xs text-slate-400">{{ related.author }} · {{ related.year }}</p>
                                 </div>
                                 <i class="mt-1 text-xs transition fas fa-chevron-right text-slate-200 group-hover:text-blue-400 shrink-0"></i>
-                            </a>
+                            </Link>
                         </div>
                     </div>
                 </div>

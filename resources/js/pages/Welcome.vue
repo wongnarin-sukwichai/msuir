@@ -1,6 +1,28 @@
 <script setup lang="ts">
 import PublicLayout from '@/layouts/PublicLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
+
+const categories = [
+    { id: 1, name: 'MSU e-Theses', name_en: 'Theses & Dissertations' },
+    { id: 2, name: 'MSU e-Research', name_en: 'Research Papers' },
+    { id: 3, name: 'MSU e-Book', name_en: 'Electronic Books' },
+    { id: 4, name: 'MSU e-Journal', name_en: 'Journals & Articles' },
+    { id: 5, name: 'Senior Project', name_en: 'Undergraduate Projects' },
+    { id: 6, name: 'Conference Papers', name_en: 'Conference Proceedings' },
+];
+
+const recommendedItems = [
+    { id: 1, title: 'ตัวอย่างผลงานวิจัยเพื่อการพัฒนาท้องถิ่นอย่างยั่งยืน ฉบับที่ 1', author: 'นักวิจัย มหาวิทยาลัยมหาสารคาม' },
+    { id: 2, title: 'ตัวอย่างผลงานวิจัยเพื่อการพัฒนาท้องถิ่นอย่างยั่งยืน ฉบับที่ 2', author: 'นักวิจัย มหาวิทยาลัยมหาสารคาม' },
+];
+
+const newReleaseItems = [
+    { id: 1, title: 'รายงานวิจัยฉบับสมบูรณ์ประจำปีงบประมาณ 2569 ลำดับที่ 1', faculty: 'คณะศิลปกรรมศาสตร์' },
+    { id: 2, title: 'รายงานวิจัยฉบับสมบูรณ์ประจำปีงบประมาณ 2569 ลำดับที่ 2', faculty: 'คณะวิทยาศาสตร์' },
+    { id: 3, title: 'รายงานวิจัยฉบับสมบูรณ์ประจำปีงบประมาณ 2569 ลำดับที่ 3', faculty: 'คณะมนุษยศาสตร์และสังคมศาสตร์' },
+    { id: 4, title: 'รายงานวิจัยฉบับสมบูรณ์ประจำปีงบประมาณ 2569 ลำดับที่ 4', faculty: 'คณะศึกษาศาสตร์' },
+    { id: 5, title: 'รายงานวิจัยฉบับสมบูรณ์ประจำปีงบประมาณ 2569 ลำดับที่ 5', faculty: 'คณะสาธารณสุขศาสตร์' },
+];
 </script>
 
 <template>
@@ -49,14 +71,14 @@ import { Head } from '@inertiajs/vue3';
                 </div>
 
                 <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-                    <div v-for="i in 6" :key="i" class="shadow-lg cursor-pointer category-card group h-72 bg-slate-200">
-                        <img :src="'https://picsum.photos/seed/' + (i + 70) + '/800/600'" class="object-cover w-full h-full" alt="Cover" />
+                    <Link v-for="(cat, idx) in categories" :key="cat.id" :href="route('category.show', cat.id)" class="block shadow-lg cursor-pointer category-card group h-72 bg-slate-200">
+                        <img :src="'https://picsum.photos/seed/' + (idx + 71) + '/800/600'" class="object-cover w-full h-full" alt="Cover" />
                         <div class="absolute inset-0 flex flex-col justify-end p-8 category-overlay">
-                            <h3 class="mb-1 text-2xl font-bold text-white">หมวดหมู่ที่ {{ i }}</h3>
-                            <p class="text-sm font-medium text-blue-100">Resource Collection {{ i }}</p>
+                            <h3 class="mb-1 text-2xl font-bold text-white">{{ cat.name }}</h3>
+                            <p class="text-sm font-medium text-blue-100">{{ cat.name_en }}</p>
                             <div class="w-0 h-1 mt-4 transition-all duration-500 bg-yellow-400 rounded-full group-hover:w-full"></div>
                         </div>
-                    </div>
+                    </Link>
                 </div>
             </section>
 
@@ -73,10 +95,11 @@ import { Head } from '@inertiajs/vue3';
                             <button class="text-sm font-bold text-blue-800 transition-colors hover:text-yellow-600">ดูทั้งหมด</button>
                         </div>
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <div
-                                v-for="j in 2"
-                                :key="j"
-                                class="p-6 transition-all bg-white border cursor-pointer card-shadow group rounded-3xl border-slate-100"
+                            <Link
+                                v-for="rItem in recommendedItems"
+                                :key="rItem.id"
+                                :href="route('item.show', rItem.id)"
+                                class="block p-6 transition-all bg-white border cursor-pointer card-shadow group rounded-3xl border-slate-100"
                             >
                                 <div class="flex items-start">
                                     <div
@@ -86,12 +109,12 @@ import { Head } from '@inertiajs/vue3';
                                     </div>
                                     <div class="ml-5">
                                         <h3 class="font-bold leading-snug transition-colors line-clamp-2 text-slate-900 group-hover:text-blue-800">
-                                            ตัวอย่างผลงานวิจัยเพื่อการพัฒนาท้องถิ่นอย่างยั่งยืน
+                                            {{ rItem.title }}
                                         </h3>
-                                        <p class="mt-2 text-xs text-slate-500">นักวิจัย มหาวิทยาลัยมหาสารคาม</p>
+                                        <p class="mt-2 text-xs text-slate-500">{{ rItem.author }}</p>
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                         </div>
                     </section>
 
@@ -106,7 +129,7 @@ import { Head } from '@inertiajs/vue3';
                             </h2>
                         </div>
                         <div class="divide-y divide-slate-50 overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-sm">
-                            <div v-for="n in 5" :key="n" class="flex items-center p-6 transition-colors cursor-pointer group hover:bg-slate-50">
+                            <Link v-for="nItem in newReleaseItems" :key="nItem.id" :href="route('item.show', nItem.id)" class="flex items-center p-6 transition-colors cursor-pointer group hover:bg-slate-50">
                                 <div
                                     class="flex items-center justify-center w-10 h-10 mr-6 transition-colors rounded-lg shrink-0 bg-slate-100 text-slate-400 group-hover:bg-blue-200 group-hover:text-blue-700"
                                 >
@@ -116,12 +139,12 @@ import { Head } from '@inertiajs/vue3';
                                     <h3
                                         class="text-base font-bold tracking-tight truncate transition-colors text-slate-800 group-hover:text-blue-900"
                                     >
-                                        รายงานวิจัยฉบับสมบูรณ์ประจำปีงบประมาณ 2569 ลำดับที่ {{ n }}
+                                        {{ nItem.title }}
                                     </h3>
-                                    <p class="mt-1 text-xs text-slate-400">อัปเดตเมื่อ: 2 ชั่วโมงที่ผ่านมา | โดย คณะศิลปกรรมศาสตร์</p>
+                                    <p class="mt-1 text-xs text-slate-400">อัปเดตเมื่อ: 2 ชั่วโมงที่ผ่านมา | โดย {{ nItem.faculty }}</p>
                                 </div>
                                 <i class="ml-4 transition-colors fas fa-chevron-right text-slate-200 group-hover:text-blue-900"></i>
-                            </div>
+                            </Link>
                         </div>
                     </section>
                 </div>
