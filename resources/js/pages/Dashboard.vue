@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import Swal from 'sweetalert2';
 import { type BreadcrumbItem } from '@/types';
+import ModernSelect from '@/components/ModernSelect.vue';
 
 // --- Interfaces & Types ---
 interface Submission {
@@ -17,12 +18,19 @@ interface Submission {
 }
 
 interface Member {
-  id: string;
+  id: number;
   name: string;
   email: string;
-  role: 'admin' | 'staff' | 'student' | 'lecturer';
-  department: string;
+  role_level: number; // 1 = สมาชิกทั่วไป, 3 = ผู้ดูแลระบบ
+  is_msu_member: boolean;
+  department_id: number | null;
+  department_name: string | null;
   status: 'active' | 'suspended';
+}
+
+interface Department {
+  id: number;
+  name: string;
 }
 
 interface NewDoc {
@@ -32,18 +40,48 @@ interface NewDoc {
   status: 'pending';
 }
 
+interface NewMember {
+  is_msu_member: boolean;
+  role_level: 1 | 3;
+  department_id: number | null;
+  name: string;
+  email_local: string; // ใช้เมื่อเป็นสมาชิก มมส. (ต่อท้าย @msu.ac.th ตอน submit)
+  email: string; // ใช้เมื่อไม่ใช่สมาชิก มมส. (กรอกเต็ม)
+  password: string;
+}
+
+interface EditMember {
+  id: number;
+  is_msu_member: boolean;
+  role_level: 1 | 3;
+  department_id: number | null;
+  name: string;
+  email_local: string;
+  email: string;
+  password: string; // เว้นว่างไว้ = ไม่เปลี่ยนรหัสผ่าน (เฉพาะบุคคลภายนอก)
+}
+
 interface Toast {
   show: boolean;
   message: string;
   type: 'success' | 'warning' | 'danger';
 }
 
+// --- Props (real data from the backend) ---
+const props = defineProps<{ members: Member[]; departments: Department[] }>();
+
 // --- Breadcrumbs Setup ---
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
+
+// --- Current logged-in admin ---
+const page = usePage();
+const currentUserId = computed(() => (page.props.auth as any)?.user?.id);
 
 // --- States ---
 const activeTab = ref<string>('dashboard'); // dashboard, repository, approvals, analytics, members, settings
 const isUploadModalOpen = ref<boolean>(false);
+const isAddMemberModalOpen = ref<boolean>(false);
+const isEditMemberModalOpen = ref<boolean>(false);
 const isMobileMenuOpen = ref<boolean>(false);
 const isProfileOpen = ref<boolean>(false);
 const searchQuery = ref<string>('');
@@ -56,6 +94,29 @@ const newDoc = ref<NewDoc>({
   author: '',
   type: 'วิทยานิพนธ์',
   status: 'pending'
+});
+
+// --- Form State (For adding a new member) ---
+const newMember = ref<NewMember>({
+  is_msu_member: true,
+  role_level: 1,
+  department_id: null,
+  name: '',
+  email_local: '',
+  email: '',
+  password: ''
+});
+
+// --- Form State (For editing an existing member) ---
+const editMember = ref<EditMember>({
+  id: 0,
+  is_msu_member: true,
+  role_level: 1,
+  department_id: null,
+  name: '',
+  email_local: '',
+  email: '',
+  password: ''
 });
 
 // --- Toast State ---
@@ -72,15 +133,6 @@ const submissions = ref<Submission[]>([
   { id: 'ART-2026-012', title: 'แนวทางการใช้ปัญญาประดิษฐ์ (AI) ในการพัฒนาหลักสูตรท้องถิ่นมหาสารคาม', author: 'ดร.สมชาย ใจดี', type: 'วารสารวิชาการ', date: '2026-05-25', status: 'pending', downloads: 0, views: 4 },
   { id: 'THE-2026-003', title: 'ระบบคลาวด์คอมพิวติ้งเพื่อการจัดการฐานข้อมูลขนาดใหญ่ในสถาบันอุดมศึกษา', author: 'นายกิตติศักดิ์ มุ่งมั่น', type: 'วิทยานิพนธ์', date: '2026-05-18', status: 'approved', downloads: 98, views: 340 },
   { id: 'LOC-2026-007', title: 'คลังรวบรวมลายผ้าทอพื้นบ้านอีสานลุ่มน้ำชีและลุ่มน้ำมูลประยุกต์', author: 'อ.สุจิตรา งามยิ่ง', type: 'ฐานข้อมูลท้องถิ่น', date: '2026-05-22', status: 'action_required', downloads: 15, views: 88 }
-]);
-
-// --- Mock Data: Members ---
-const members = ref<Member[]>([
-  { id: 'MEM-001', name: 'ดร.สมศักดิ์ รักเรียน', email: 'somsak.r@msu.ac.th', role: 'admin', department: 'สำนักวิทยบริการ', status: 'active' },
-  { id: 'MEM-002', name: 'รศ.ดร.มนตรี มีสุข', email: 'montri.m@msu.ac.th', role: 'lecturer', department: 'คณะวิทยาศาสตร์', status: 'active' },
-  { id: 'MEM-003', name: 'นายกิตติศักดิ์ มุ่งมั่น', email: 'kittisak.m@msu.ac.th', role: 'student', department: 'คณะวิทยาการสารสนเทศ', status: 'active' },
-  { id: 'MEM-004', name: 'อ.สุจิตรา งามยิ่ง', email: 'suchitra.n@msu.ac.th', role: 'staff', department: 'สถาบันวิจัยศิลปะและวัฒนธรรมอีสาน', status: 'active' },
-  { id: 'MEM-005', name: 'นายวิชาการ ก้าวไกล', email: 'wichakan.k@msu.ac.th', role: 'student', department: 'คณะวิศวกรรมศาสตร์', status: 'suspended' }
 ]);
 
 // --- Dynamic calculations ---
@@ -100,10 +152,11 @@ const filteredSubmissions = computed(() => {
 });
 
 const filteredMembers = computed(() => {
-  return members.value.filter(member => {
-    return member.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-           member.email.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-           member.department.toLowerCase().includes(searchQuery.value.toLowerCase());
+  return props.members.filter(member => {
+    const q = searchQuery.value.toLowerCase();
+    return member.name.toLowerCase().includes(q) ||
+           member.email.toLowerCase().includes(q) ||
+           (member.department_name ?? '').toLowerCase().includes(q);
   });
 });
 
@@ -137,14 +190,125 @@ const handleDelete = (id: string) => {
   }
 };
 
-const handleToggleUserStatus = (id: string) => {
-  members.value = members.value.map(mem => {
-    if (mem.id === id) {
-      const newStatus = mem.status === 'active' ? 'suspended' : 'active';
-      triggerToast(`เปลี่ยนสถานะผู้ใช้งานเป็น ${newStatus === 'active' ? 'ปกติ' : 'ระงับการใช้งาน'} สำเร็จ`, 'warning');
-      return { ...mem, status: newStatus };
+const handleToggleUserStatus = (member: Member) => {
+  router.patch(route('admin.members.status', member.id), {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      const newStatus = member.status === 'active' ? 'ระงับการใช้งาน' : 'ปกติ';
+      triggerToast(`เปลี่ยนสถานะผู้ใช้งานเป็น ${newStatus} สำเร็จ`, 'warning');
     }
-    return mem;
+  });
+};
+
+const handleDeleteMember = async (member: Member) => {
+  const result = await Swal.fire({
+    title: 'ลบสมาชิก?',
+    text: `คุณต้องการลบสมาชิก "${member.name}" ออกจากระบบใช่หรือไม่`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#dc2626',
+    cancelButtonColor: '#94a3b8',
+    confirmButtonText: 'ลบสมาชิก',
+    cancelButtonText: 'ยกเลิก',
+    reverseButtons: true,
+  });
+  if (!result.isConfirmed) return;
+
+  router.delete(route('admin.members.destroy', member.id), {
+    preserveScroll: true,
+    onSuccess: () => triggerToast('ลบสมาชิกสำเร็จ', 'danger'),
+  });
+};
+
+const handleImpersonate = async (member: Member) => {
+  const result = await Swal.fire({
+    title: 'สวมสิทธิ์สมาชิก?',
+    text: `คุณกำลังจะเข้าสู่ระบบในฐานะ "${member.name}"`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#1e3a8a',
+    cancelButtonColor: '#94a3b8',
+    confirmButtonText: 'สวมสิทธิ์',
+    cancelButtonText: 'ยกเลิก',
+    reverseButtons: true,
+  });
+  if (!result.isConfirmed) return;
+
+  router.post(route('admin.members.impersonate', member.id));
+};
+
+const handleCreateMember = () => {
+  const isMsu = newMember.value.is_msu_member;
+  const email = isMsu ? `${newMember.value.email_local}@msu.ac.th` : newMember.value.email;
+
+  if (!newMember.value.name || (isMsu ? !newMember.value.email_local : !newMember.value.email)) {
+    triggerToast('กรุณากรอกข้อมูลให้ครบถ้วน', 'danger');
+    return;
+  }
+  if (!isMsu && !newMember.value.password) {
+    triggerToast('กรุณากำหนดรหัสผ่านสำหรับสมาชิกภายนอก', 'danger');
+    return;
+  }
+
+  router.post(route('admin.members.store'), {
+    is_msu_member: isMsu,
+    role_level: newMember.value.role_level,
+    department_id: newMember.value.department_id,
+    name: newMember.value.name,
+    email,
+    password: isMsu ? '' : newMember.value.password,
+  }, {
+    preserveScroll: true,
+    onSuccess: () => {
+      isAddMemberModalOpen.value = false;
+      newMember.value = { is_msu_member: true, role_level: 1, department_id: null, name: '', email_local: '', email: '', password: '' };
+      triggerToast('เพิ่มสมาชิกใหม่สำเร็จ', 'success');
+    },
+    onError: () => {
+      triggerToast('เพิ่มสมาชิกไม่สำเร็จ กรุณาตรวจสอบข้อมูล', 'danger');
+    },
+  });
+};
+
+const handleOpenEditMember = (member: Member) => {
+  editMember.value = {
+    id: member.id,
+    is_msu_member: member.is_msu_member,
+    role_level: member.role_level as 1 | 3,
+    department_id: member.department_id,
+    name: member.name,
+    email_local: member.is_msu_member ? member.email.replace(/@msu\.ac\.th$/, '') : '',
+    email: member.is_msu_member ? '' : member.email,
+    password: '',
+  };
+  isEditMemberModalOpen.value = true;
+};
+
+const handleUpdateMember = () => {
+  const isMsu = editMember.value.is_msu_member;
+  const email = isMsu ? `${editMember.value.email_local}@msu.ac.th` : editMember.value.email;
+
+  if (!editMember.value.name || (isMsu ? !editMember.value.email_local : !editMember.value.email)) {
+    triggerToast('กรุณากรอกข้อมูลให้ครบถ้วน', 'danger');
+    return;
+  }
+
+  router.put(route('admin.members.update', editMember.value.id), {
+    is_msu_member: isMsu,
+    role_level: editMember.value.role_level,
+    department_id: editMember.value.department_id,
+    name: editMember.value.name,
+    email,
+    password: isMsu ? '' : editMember.value.password,
+  }, {
+    preserveScroll: true,
+    onSuccess: () => {
+      isEditMemberModalOpen.value = false;
+      triggerToast('บันทึกข้อมูลสมาชิกสำเร็จ', 'success');
+    },
+    onError: () => {
+      triggerToast('บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบข้อมูล', 'danger');
+    },
   });
 };
 
@@ -193,6 +357,12 @@ const logout = async () => {
 watch(isUploadModalOpen, (newVal) => {
   document.body.style.overflow = newVal ? 'hidden' : '';
 });
+watch(isAddMemberModalOpen, (newVal) => {
+  document.body.style.overflow = newVal ? 'hidden' : '';
+});
+watch(isEditMemberModalOpen, (newVal) => {
+  document.body.style.overflow = newVal ? 'hidden' : '';
+});
 </script>
 
 <template>
@@ -233,20 +403,34 @@ watch(isUploadModalOpen, (newVal) => {
 
         <!-- Menu Tabs (เปลี่ยนมาใช้ไอคอนของ Font Awesome 6) -->
         <nav class="space-y-1.5">
-          <button 
+          <button
             @click="activeTab = 'dashboard'"
             :class="[
               'w-full flex items-center rounded-xl text-xs font-bold transition-all duration-300 outline-none',
               isSidebarCollapsed ? 'justify-center p-3.5' : 'space-x-3 px-4 py-3.5',
               activeTab === 'dashboard' ? 'bg-[#facc15] text-[#1e3a8a] shadow-lg' : 'text-blue-100/70 hover:bg-white/10 hover:text-white'
             ]"
-            title="ภาพรวมแผงควบคุม"
+            title="แดชบอร์ด"
           >
             <i class="flex items-center justify-center w-5 h-5 text-sm fa-solid fa-chart-line"></i>
-            <span v-if="!isSidebarCollapsed">ภาพรวมแผงควบคุม</span>
+            <span v-if="!isSidebarCollapsed">แดชบอร์ด</span>
           </button>
 
-          <button 
+          <!-- จัดการสมาชิก (Added Menu Item) -->
+          <button
+            @click="activeTab = 'members'"
+            :class="[
+              'w-full flex items-center rounded-xl text-xs font-bold transition-all duration-300 outline-none',
+              isSidebarCollapsed ? 'justify-center p-3.5' : 'space-x-3 px-4 py-3.5',
+              activeTab === 'members' ? 'bg-[#facc15] text-[#1e3a8a] shadow-lg' : 'text-blue-100/70 hover:bg-white/10 hover:text-white'
+            ]"
+            title="จัดการสมาชิก"
+          >
+            <i class="flex items-center justify-center w-5 h-5 text-sm fa-solid fa-user-group"></i>
+            <span v-if="!isSidebarCollapsed" class="truncate">จัดการสมาชิก</span>
+          </button>
+
+          <button
             @click="activeTab = 'repository'"
             :class="[
               'w-full flex items-center rounded-xl text-xs font-bold transition-all duration-300 outline-none',
@@ -262,7 +446,7 @@ watch(isUploadModalOpen, (newVal) => {
             </span>
           </button>
 
-          <button 
+          <button
             @click="activeTab = 'approvals'"
             :class="[
               'w-full flex items-center rounded-xl text-xs font-bold transition-all duration-300 outline-none',
@@ -291,21 +475,7 @@ watch(isUploadModalOpen, (newVal) => {
             <span v-if="!isSidebarCollapsed" class="truncate">สถิติและการดาวน์โหลด</span>
           </button>
 
-          <!-- จัดการสมาชิก (Added Menu Item) -->
-          <button 
-            @click="activeTab = 'members'"
-            :class="[
-              'w-full flex items-center rounded-xl text-xs font-bold transition-all duration-300 outline-none',
-              isSidebarCollapsed ? 'justify-center p-3.5' : 'space-x-3 px-4 py-3.5',
-              activeTab === 'members' ? 'bg-[#facc15] text-[#1e3a8a] shadow-lg' : 'text-blue-100/70 hover:bg-white/10 hover:text-white'
-            ]"
-            title="จัดการสมาชิก"
-          >
-            <i class="flex items-center justify-center w-5 h-5 text-sm fa-solid fa-user-group"></i>
-            <span v-if="!isSidebarCollapsed" class="truncate">จัดการสมาชิก</span>
-          </button>
-
-          <button 
+          <button
             @click="activeTab = 'settings'"
             :class="[
               'w-full flex items-center rounded-xl text-xs font-bold transition-all duration-300 outline-none',
@@ -925,13 +1095,21 @@ watch(isUploadModalOpen, (newVal) => {
             <!-- Search bar input -->
             <div class="relative w-full max-w-md group">
               <i class="absolute transition-colors -translate-y-1/2 fa-solid fa-magnifying-glass left-4 top-1/2 text-slate-400 group-focus-within:text-blue-900"></i>
-              <input 
-                type="text" 
-                placeholder="ค้นหาสมาชิกด้วยชื่อ, อีเมล หรือคณะ..." 
+              <input
+                type="text"
+                placeholder="ค้นหาสมาชิกด้วยชื่อ, อีเมล หรือคณะ..."
                 v-model="searchQuery"
                 class="w-full py-3.5 pl-12 pr-4 bg-slate-50 border border-slate-200 focus:border-blue-900 focus:bg-white rounded-2xl outline-none text-sm transition-all focus:ring-4 focus:ring-blue-900/5 font-medium"
               />
             </div>
+
+            <button
+              @click="isAddMemberModalOpen = true"
+              class="bg-[#1e3a8a] hover:bg-blue-800 text-white px-5 py-3.5 rounded-2xl text-xs font-black shadow-lg shadow-blue-900/10 hover:shadow-xl transition-all flex items-center justify-center group active:scale-95 outline-none shrink-0"
+            >
+              <i class="fa-solid fa-user-plus mr-1.5 transition-transform group-hover:rotate-6 text-[11px]"></i>
+              <span>เพิ่มสมาชิก</span>
+            </button>
           </div>
 
           <!-- Members Table view representation -->
@@ -945,6 +1123,7 @@ watch(isUploadModalOpen, (newVal) => {
                   <th class="px-6 py-5">บทบาท</th>
                   <th class="px-6 py-5">หน่วยงาน/คณะ</th>
                   <th class="px-6 py-5">สถานะบัญชี</th>
+                  <th class="px-6 py-5 text-center">สวมสิทธิ์</th>
                   <th class="px-6 py-5 text-center">จัดการ</th>
                 </tr>
               </thead>
@@ -957,35 +1136,53 @@ watch(isUploadModalOpen, (newVal) => {
                     <td class="px-6 py-4">
                       <span :class="[
                         'px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider',
-                        member.role === 'admin' ? 'bg-red-50 text-red-700' : 
-                        member.role === 'lecturer' ? 'bg-blue-50 text-blue-700' : 
-                        member.role === 'staff' ? 'bg-purple-50 text-purple-700' : 'bg-slate-100 text-slate-700'
+                        member.role_level === 3 ? 'bg-red-50 text-red-700' : 'bg-slate-100 text-slate-700'
                       ]">
-                        {{ member.role }}
+                        {{ member.role_level === 3 ? 'ผู้ดูแลระบบ' : 'สมาชิกทั่วไป' }}
                       </span>
                     </td>
-                    <td class="px-6 py-4 text-xs font-bold text-slate-500">{{ member.department }}</td>
+                    <td class="px-6 py-4 text-xs font-bold text-slate-500">{{ member.department_name || '-' }}</td>
                     <td class="px-6 py-4">
-                      <span :class="[
-                        'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center',
-                        member.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                      ]">
+                      <button
+                        @click="handleToggleUserStatus(member)"
+                        :title="member.status === 'active' ? 'คลิกเพื่อระงับการใช้งาน' : 'คลิกเพื่อเปิดใช้งานปกติ'"
+                        :class="[
+                          'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center cursor-pointer transition-opacity hover:opacity-70 outline-none',
+                          member.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        ]"
+                      >
                         <span class="w-1.5 h-1.5 rounded-full mr-1.5 bg-current"></span>
                         {{ member.status === 'active' ? 'ใช้งานปกติ' : 'ถูกระงับสิทธิ์' }}
-                      </span>
+                      </button>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="flex items-center justify-center">
+                        <button
+                          @click="handleImpersonate(member)"
+                          :disabled="member.id === currentUserId || member.role_level === 3 || member.status !== 'active'"
+                          class="w-8 h-8 rounded-full flex items-center justify-center transition-all bg-blue-50 text-blue-700 hover:bg-blue-700 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-blue-50 disabled:hover:text-blue-700"
+                          title="สวมสิทธิ์เข้าสู่ระบบในฐานะสมาชิกคนนี้"
+                        >
+                          <i class="text-xs fa-solid fa-user-secret"></i>
+                        </button>
+                      </div>
                     </td>
                     <td class="px-6 py-4">
                       <div class="flex items-center justify-center space-x-2">
-                        <button 
-                          @click="handleToggleUserStatus(member.id)" 
-                          :class="[
-                            'w-8 h-8 rounded-full flex items-center justify-center transition-all',
-                            member.status === 'active' ? 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white' : 'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white'
-                          ]" 
-                          :title="member.status === 'active' ? 'ระงับการใช้งาน' : 'เปิดใช้งานปกติ'"
+                        <button
+                          @click="handleOpenEditMember(member)"
+                          class="w-8 h-8 rounded-full flex items-center justify-center transition-all bg-slate-50 text-slate-400 hover:bg-blue-900 hover:text-white"
+                          title="แก้ไขข้อมูลสมาชิก"
                         >
-                          <i v-if="member.status === 'active'" class="text-xs fa-solid fa-user-slash"></i>
-                          <i v-else class="text-xs fa-solid fa-user-check"></i>
+                          <i class="text-xs fa-solid fa-pen"></i>
+                        </button>
+                        <button
+                          @click="handleDeleteMember(member)"
+                          :disabled="member.id === currentUserId"
+                          class="w-8 h-8 rounded-full flex items-center justify-center transition-all bg-slate-50 text-slate-400 hover:bg-red-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-slate-50 disabled:hover:text-slate-400"
+                          title="ลบสมาชิก"
+                        >
+                          <i class="text-xs fa-regular fa-trash-can"></i>
                         </button>
                       </div>
                     </td>
@@ -993,7 +1190,7 @@ watch(isUploadModalOpen, (newVal) => {
                 </template>
                 <template v-else>
                   <tr>
-                    <td colSpan="7" class="py-12 text-sm font-bold text-center text-slate-400">
+                    <td colSpan="8" class="py-12 text-sm font-bold text-center text-slate-400">
                       <i class="mb-3 text-4xl fa-solid fa-users text-slate-300"></i>
                       <p>ไม่พบค้นหาข้อมูลสมาชิกที่ระบุ</p>
                     </td>
@@ -1070,7 +1267,7 @@ watch(isUploadModalOpen, (newVal) => {
             <!-- Navigation Links in mobile context (Clean & Standard Menu) -->
             <nav class="space-y-1">
               <!-- หน้าแรกภาพรวม -->
-              <button 
+              <button
                 @click="activeTab = 'dashboard'; isMobileMenuOpen = false"
                 :class="[
                   'w-full flex items-center space-x-4 px-4 py-3 rounded-xl text-xs font-bold transition-all outline-none',
@@ -1078,11 +1275,23 @@ watch(isUploadModalOpen, (newVal) => {
                 ]"
               >
                 <i class="text-sm fa-solid fa-chart-line"></i>
-                <span>ภาพรวมแผงควบคุม</span>
+                <span>แดชบอร์ด</span>
+              </button>
+
+              <!-- จัดการสมาชิก -->
+              <button
+                @click="activeTab = 'members'; isMobileMenuOpen = false"
+                :class="[
+                  'w-full flex items-center space-x-4 px-4 py-3 rounded-xl text-xs font-bold transition-all outline-none',
+                  activeTab === 'members' ? 'bg-[#facc15] text-[#1e3a8a]' : 'text-blue-100 hover:bg-white/10'
+                ]"
+              >
+                <i class="text-sm fa-solid fa-user-group"></i>
+                <span>จัดการสมาชิก</span>
               </button>
 
               <!-- จัดการคลังข้อมูลหลัก -->
-              <button 
+              <button
                 @click="activeTab = 'repository'; isMobileMenuOpen = false"
                 :class="[
                   'w-full flex items-center space-x-4 px-4 py-3 rounded-xl text-xs font-bold transition-all outline-none',
@@ -1117,20 +1326,8 @@ watch(isUploadModalOpen, (newVal) => {
                 <span>สถิติและการดาวน์โหลด</span>
               </button>
 
-              <!-- จัดการสมาชิก -->
-              <button 
-                @click="activeTab = 'members'; isMobileMenuOpen = false"
-                :class="[
-                  'w-full flex items-center space-x-4 px-4 py-3 rounded-xl text-xs font-bold transition-all outline-none',
-                  activeTab === 'members' ? 'bg-[#facc15] text-[#1e3a8a]' : 'text-blue-100 hover:bg-white/10'
-                ]"
-              >
-                <i class="text-sm fa-solid fa-user-group"></i>
-                <span>จัดการสมาชิก</span>
-              </button>
-
               <!-- ตั้งค่าระบบส่วนกลาง -->
-              <button 
+              <button
                 @click="activeTab = 'settings'; isMobileMenuOpen = false"
                 :class="[
                   'w-full flex items-center space-x-4 px-4 py-3 rounded-xl text-xs font-bold transition-all outline-none',
@@ -1218,6 +1415,243 @@ watch(isUploadModalOpen, (newVal) => {
               </button>
               <button type="submit" class="flex-1 bg-[#1e3a8a] hover:bg-blue-800 text-white py-4 rounded-2xl text-xs font-black shadow-lg shadow-blue-900/20 active:scale-95 transition-all">
                 บันทึกนำส่งข้อมูล
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
+    <!-- --- ADD MEMBER MODAL (FADE & SCALE) --- -->
+    <transition name="modal-fade">
+      <div v-if="isAddMemberModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <!-- Blur Backdrop -->
+        <div @click="isAddMemberModalOpen = false" class="absolute inset-0 bg-slate-950/40 backdrop-blur-md"></div>
+
+        <!-- Content card -->
+        <div class="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-slate-100">
+          <div class="bg-gradient-to-br from-[#1e3a8a] via-[#1e40af] to-blue-700 p-8 text-white relative overflow-hidden rounded-t-[2.5rem]">
+            <div class="absolute w-32 h-32 rounded-full -right-8 -top-8 bg-white/5 blur-2xl"></div>
+            <h3 class="text-2xl font-black tracking-tight">เพิ่มสมาชิกใหม่</h3>
+            <p class="mt-1 text-xs text-blue-100/80">กรอกข้อมูลเพื่อสร้างบัญชีสมาชิกใหม่เข้าสู่ระบบ</p>
+
+            <button @click="isAddMemberModalOpen = false" class="absolute flex items-center justify-center w-10 h-10 text-white transition-all rounded-full outline-none right-6 top-6 bg-white/10 hover:bg-white/20 hover:rotate-90">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <!-- Form inputs container -->
+          <form @submit.prevent="handleCreateMember" class="p-8 space-y-6 bg-white rounded-b-[2.5rem]">
+            <div>
+              <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">สถานะสมาชิก</label>
+              <div class="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  @click="newMember.is_msu_member = true"
+                  :class="[
+                    'py-3.5 rounded-2xl text-xs font-black transition-all border-2',
+                    newMember.is_msu_member ? 'bg-blue-50 border-blue-900 text-blue-900' : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300'
+                  ]"
+                >
+                  สมาชิก มมส. (@msu.ac.th)
+                </button>
+                <button
+                  type="button"
+                  @click="newMember.is_msu_member = false"
+                  :class="[
+                    'py-3.5 rounded-2xl text-xs font-black transition-all border-2',
+                    !newMember.is_msu_member ? 'bg-blue-50 border-blue-900 text-blue-900' : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300'
+                  ]"
+                >
+                  บุคคลภายนอก
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">บทบาท</label>
+                <ModernSelect
+                  v-model="newMember.role_level"
+                  :options="[{ value: 1, label: 'สมาชิกทั่วไป' }, { value: 3, label: 'ผู้ดูแลระบบ' }]"
+                />
+              </div>
+              <div>
+                <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">หน่วยงาน/คณะ</label>
+                <ModernSelect
+                  v-model="newMember.department_id"
+                  :options="[{ value: null, label: 'ไม่ระบุ' }, ...props.departments.map(dep => ({ value: dep.id, label: dep.name }))]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">ชื่อ-นามสกุล</label>
+              <input
+                type="text"
+                placeholder="เช่น ดร.สมศักดิ์ รักเรียน"
+                v-model="newMember.name"
+                class="w-full px-5 py-4 text-sm font-bold tracking-tight transition-all border outline-none bg-slate-50 border-slate-200 focus:border-blue-900 focus:bg-white rounded-2xl focus:ring-4 focus:ring-blue-900/5 placeholder:text-slate-300"
+              />
+            </div>
+
+            <div>
+              <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">อีเมล</label>
+              <div v-if="newMember.is_msu_member" class="flex items-stretch">
+                <input
+                  type="text"
+                  placeholder="ชื่อผู้ใช้"
+                  v-model="newMember.email_local"
+                  class="w-full px-5 py-4 text-sm font-bold tracking-tight transition-all border outline-none bg-slate-50 border-slate-200 focus:border-blue-900 focus:bg-white rounded-l-2xl focus:ring-4 focus:ring-blue-900/5 placeholder:text-slate-300"
+                />
+                <span class="flex items-center px-4 text-sm font-bold border border-l-0 rounded-r-2xl bg-slate-100 border-slate-200 text-slate-500 whitespace-nowrap">@msu.ac.th</span>
+              </div>
+              <input
+                v-else
+                type="email"
+                placeholder="name@example.com"
+                v-model="newMember.email"
+                class="w-full px-5 py-4 text-sm font-bold tracking-tight transition-all border outline-none bg-slate-50 border-slate-200 focus:border-blue-900 focus:bg-white rounded-2xl focus:ring-4 focus:ring-blue-900/5 placeholder:text-slate-300"
+              />
+            </div>
+
+            <div v-if="!newMember.is_msu_member">
+              <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">รหัสผ่านเริ่มต้น</label>
+              <input
+                type="password"
+                placeholder="กำหนดรหัสผ่านเริ่มต้นสำหรับสมาชิก"
+                v-model="newMember.password"
+                class="w-full px-5 py-4 text-sm font-bold tracking-tight transition-all border outline-none bg-slate-50 border-slate-200 focus:border-blue-900 focus:bg-white rounded-2xl focus:ring-4 focus:ring-blue-900/5 placeholder:text-slate-300"
+              />
+            </div>
+            <p v-else class="text-[11px] font-bold text-slate-400 leading-relaxed -mt-2">
+              สมาชิก มมส. เข้าสู่ระบบด้วยบัญชี Google (@msu.ac.th) จึงไม่ต้องตั้งรหัสผ่าน
+            </p>
+
+            <!-- Footer actions -->
+            <div class="flex pt-4 space-x-3 border-t border-slate-100">
+              <button type="button" @click="isAddMemberModalOpen = false" class="flex-1 py-4 text-xs font-bold transition-colors text-slate-500 hover:bg-slate-50 rounded-2xl">
+                ยกเลิก
+              </button>
+              <button type="submit" class="flex-1 bg-[#1e3a8a] hover:bg-blue-800 text-white py-4 rounded-2xl text-xs font-black shadow-lg shadow-blue-900/20 active:scale-95 transition-all">
+                บันทึกสมาชิกใหม่
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
+    <!-- --- EDIT MEMBER MODAL (FADE & SCALE) --- -->
+    <transition name="modal-fade">
+      <div v-if="isEditMemberModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <!-- Blur Backdrop -->
+        <div @click="isEditMemberModalOpen = false" class="absolute inset-0 bg-slate-950/40 backdrop-blur-md"></div>
+
+        <!-- Content card -->
+        <div class="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-slate-100">
+          <div class="bg-gradient-to-br from-[#1e3a8a] via-[#1e40af] to-blue-700 p-8 text-white relative overflow-hidden rounded-t-[2.5rem]">
+            <div class="absolute w-32 h-32 rounded-full -right-8 -top-8 bg-white/5 blur-2xl"></div>
+            <h3 class="text-2xl font-black tracking-tight">แก้ไขข้อมูลสมาชิก</h3>
+            <p class="mt-1 text-xs text-blue-100/80">ปรับปรุงข้อมูลบัญชีสมาชิก #{{ editMember.id }}</p>
+
+            <button @click="isEditMemberModalOpen = false" class="absolute flex items-center justify-center w-10 h-10 text-white transition-all rounded-full outline-none right-6 top-6 bg-white/10 hover:bg-white/20 hover:rotate-90">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <!-- Form inputs container -->
+          <form @submit.prevent="handleUpdateMember" class="p-8 space-y-6 bg-white rounded-b-[2.5rem]">
+            <div>
+              <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">สถานะสมาชิก</label>
+              <div class="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  @click="editMember.is_msu_member = true"
+                  :class="[
+                    'py-3.5 rounded-2xl text-xs font-black transition-all border-2',
+                    editMember.is_msu_member ? 'bg-blue-50 border-blue-900 text-blue-900' : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300'
+                  ]"
+                >
+                  สมาชิก มมส. (@msu.ac.th)
+                </button>
+                <button
+                  type="button"
+                  @click="editMember.is_msu_member = false"
+                  :class="[
+                    'py-3.5 rounded-2xl text-xs font-black transition-all border-2',
+                    !editMember.is_msu_member ? 'bg-blue-50 border-blue-900 text-blue-900' : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300'
+                  ]"
+                >
+                  บุคคลภายนอก
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">บทบาท</label>
+                <ModernSelect
+                  v-model="editMember.role_level"
+                  :options="[{ value: 1, label: 'สมาชิกทั่วไป' }, { value: 3, label: 'ผู้ดูแลระบบ' }]"
+                />
+              </div>
+              <div>
+                <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">หน่วยงาน/คณะ</label>
+                <ModernSelect
+                  v-model="editMember.department_id"
+                  :options="[{ value: null, label: 'ไม่ระบุ' }, ...props.departments.map(dep => ({ value: dep.id, label: dep.name }))]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">ชื่อ-นามสกุล</label>
+              <input
+                type="text"
+                placeholder="เช่น ดร.สมศักดิ์ รักเรียน"
+                v-model="editMember.name"
+                class="w-full px-5 py-4 text-sm font-bold tracking-tight transition-all border outline-none bg-slate-50 border-slate-200 focus:border-blue-900 focus:bg-white rounded-2xl focus:ring-4 focus:ring-blue-900/5 placeholder:text-slate-300"
+              />
+            </div>
+
+            <div>
+              <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">อีเมล</label>
+              <div v-if="editMember.is_msu_member" class="flex items-stretch">
+                <input
+                  type="text"
+                  placeholder="ชื่อผู้ใช้"
+                  v-model="editMember.email_local"
+                  class="w-full px-5 py-4 text-sm font-bold tracking-tight transition-all border outline-none bg-slate-50 border-slate-200 focus:border-blue-900 focus:bg-white rounded-l-2xl focus:ring-4 focus:ring-blue-900/5 placeholder:text-slate-300"
+                />
+                <span class="flex items-center px-4 text-sm font-bold border border-l-0 rounded-r-2xl bg-slate-100 border-slate-200 text-slate-500 whitespace-nowrap">@msu.ac.th</span>
+              </div>
+              <input
+                v-else
+                type="email"
+                placeholder="name@example.com"
+                v-model="editMember.email"
+                class="w-full px-5 py-4 text-sm font-bold tracking-tight transition-all border outline-none bg-slate-50 border-slate-200 focus:border-blue-900 focus:bg-white rounded-2xl focus:ring-4 focus:ring-blue-900/5 placeholder:text-slate-300"
+              />
+            </div>
+
+            <div v-if="!editMember.is_msu_member">
+              <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">รหัสผ่านใหม่</label>
+              <input
+                type="password"
+                placeholder="เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน"
+                v-model="editMember.password"
+                class="w-full px-5 py-4 text-sm font-bold tracking-tight transition-all border outline-none bg-slate-50 border-slate-200 focus:border-blue-900 focus:bg-white rounded-2xl focus:ring-4 focus:ring-blue-900/5 placeholder:text-slate-300"
+              />
+            </div>
+
+            <!-- Footer actions -->
+            <div class="flex pt-4 space-x-3 border-t border-slate-100">
+              <button type="button" @click="isEditMemberModalOpen = false" class="flex-1 py-4 text-xs font-bold transition-colors text-slate-500 hover:bg-slate-50 rounded-2xl">
+                ยกเลิก
+              </button>
+              <button type="submit" class="flex-1 bg-[#1e3a8a] hover:bg-blue-800 text-white py-4 rounded-2xl text-xs font-black shadow-lg shadow-blue-900/20 active:scale-95 transition-all">
+                บันทึกการแก้ไข
               </button>
             </div>
           </form>

@@ -1,7 +1,21 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep -n \"</div>$\\\\|</template>\" \"c:/xampp/htdocs/msuir/resources/js/pages/Item.vue\")"
+      "Bash(grep -n \"</div>$\\\\|</template>\" \"c:/xampp/htdocs/msuir/resources/js/pages/Item.vue\")",
+      "Bash(php artisan *)",
+      "Bash(php -l app/Http/Controllers/DashboardController.php)",
+      "Bash(php -l app/Http/Controllers/Admin/MemberController.php)",
+      "Bash(php -l app/Http/Controllers/Admin/ImpersonateController.php)",
+      "Bash(php -l app/Http/Middleware/CheckRole.php)",
+      "Bash(php -l bootstrap/app.php)",
+      "Bash(python3 -c ' *)",
+      "Bash(find / -iname \"dep.txt\" -not -path \"*/scratchpad/*\" 2>/dev/null | head -20)",
+      "Read(//c//**)",
+      "Bash(php -l app/Models/User.php)",
+      "Bash(php -l app/Models/Dept.php)",
+      "Bash(php -l database/seeders/DepsSeeder.php)",
+      "Bash(php artisan tinker '--execute= *)",
+      "Bash(php -l routes/web.php)"
     ]
   }
 }

@@ -13,8 +13,12 @@ class CheckRole
      *
      * @param  Closure(Request): (Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, string $level = '1'): Response
     {
+        if (! $request->user() || (int) $request->user()->role_level < (int) $level) {
+            abort(403);
+        }
+
         return $next($request);
     }
 }
