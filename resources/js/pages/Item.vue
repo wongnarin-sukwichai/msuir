@@ -40,7 +40,7 @@ interface Item {
     views: number;
     downloads: number;
     files: FileAttachment[];
-    category: { name: string; slug: string };
+    collection: { name: string; slug: string };
 }
 
 // --- Props ---
@@ -74,7 +74,7 @@ const props = withDefaults(
                 { id: 2, name: 'ABSTRACT_SIRILAK_2567.pdf', size: '0.5 MB', pages: 4, type: 'pdf', restricted: false },
                 { id: 3, name: 'APPENDIX_SIRILAK_2567.pdf', size: '1.8 MB', pages: 45, type: 'pdf', restricted: true },
             ],
-            category: { name: 'MSU e-Theses', slug: 'theses' },
+            collection: { name: 'MSU e-Theses', slug: 'theses' },
         }),
         relatedItems: () => [
             { id: 2, title: 'การพัฒนาชุดกิจกรรมการเรียนรู้แบบโครงงานเพื่อส่งเสริมทักษะการคิดเชิงสร้างสรรค์', author: 'ธนกร สุวรรณรัตน์', year: 2567, type: 'วิทยานิพนธ์ปริญญาโท' },
@@ -135,7 +135,7 @@ const copyCitation = async (type: string, text: string) => {
                 <ol class="flex flex-wrap items-center gap-2 text-sm">
                     <li><Link href="/" class="font-medium transition-colors text-slate-500 hover:text-blue-800"><i class="fas fa-home mr-1.5 text-xs"></i>หน้าแรก</Link></li>
                     <li><i class="fas fa-chevron-right text-[9px] text-slate-300"></i></li>
-                    <li><Link :href="route('category.show', 1)" class="font-medium transition-colors text-slate-500 hover:text-blue-800">{{ item.category.name }}</Link></li>
+                    <li><Link :href="route('collection.show', 1)" class="font-medium transition-colors text-slate-500 hover:text-blue-800">{{ item.collection.name }}</Link></li>
                     <li><i class="fas fa-chevron-right text-[9px] text-slate-300"></i></li>
                     <li class="max-w-xs truncate font-bold text-[#1e3a8a]">{{ item.title.slice(0, 50) }}...</li>
                 </ol>
@@ -238,7 +238,7 @@ const copyCitation = async (type: string, text: string) => {
                                 ปี {{ item.year }}
                             </span>
                             <span class="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600">
-                                {{ item.category.name }}
+                                {{ item.collection.name }}
                             </span>
                         </div>
 

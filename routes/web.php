@@ -3,7 +3,7 @@ use App\Http\Controllers\Admin\ImpersonateController;
 use App\Http\Controllers\Admin\MemberController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\GoogleAuthController;
-use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ItemController;
 
@@ -14,7 +14,7 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
-Route::get('/category/{id}', [CategoryController::class, 'show'])->name('category.show');
+Route::get('/collection/{id}', [CollectionController::class, 'show'])->name('collection.show');
 Route::get('/item/{id}', [ItemController::class, 'show'])->name('item.show');
 
 // สำหรับ Email/Password ปกติ

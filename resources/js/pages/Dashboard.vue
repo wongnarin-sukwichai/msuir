@@ -85,7 +85,7 @@ const isEditMemberModalOpen = ref<boolean>(false);
 const isMobileMenuOpen = ref<boolean>(false);
 const isProfileOpen = ref<boolean>(false);
 const searchQuery = ref<string>('');
-const categoryFilter = ref<string>('all');
+const collectionFilter = ref<string>('all');
 const isSidebarCollapsed = ref<boolean>(false); // สำหรับการพับ-กาง Sidebar บน PC
 
 // --- Form State (For uploading new item) ---
@@ -146,8 +146,8 @@ const filteredSubmissions = computed(() => {
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
                           item.author.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                           item.id.toLowerCase().includes(searchQuery.value.toLowerCase());
-    const matchesCategory = categoryFilter.value === 'all' || item.type === categoryFilter.value;
-    return matchesSearch && matchesCategory;
+    const matchesCollection = collectionFilter.value === 'all' || item.type === collectionFilter.value;
+    return matchesSearch && matchesCollection;
   });
 });
 
@@ -873,7 +873,7 @@ watch(isEditMemberModalOpen, (newVal) => {
             <div class="flex items-center gap-3">
               <span class="text-xs font-black tracking-widest uppercase text-slate-400">หมวดหมู่:</span>
               <select 
-                v-model="categoryFilter"
+                v-model="collectionFilter"
                 class="bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-2xl text-xs font-bold text-slate-600 focus:border-blue-900 focus:bg-white outline-none"
               >
                 <option value="all">ทั้งหมด ทุกทรัพยากร</option>

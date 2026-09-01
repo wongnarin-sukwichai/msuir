@@ -31,7 +31,7 @@ class ItemController extends Controller
                 ['id' => 2, 'name' => 'ABSTRACT_SIRILAK_2567.pdf', 'size' => '0.5 MB', 'pages' => 4,   'type' => 'pdf', 'restricted' => false],
                 ['id' => 3, 'name' => 'APPENDIX_SIRILAK_2567.pdf', 'size' => '1.8 MB', 'pages' => 45,  'type' => 'pdf', 'restricted' => true],
             ],
-            'category'    => ['name' => 'MSU e-Theses', 'slug' => 'theses'],
+            'collection'  => ['name' => 'MSU e-Theses', 'slug' => 'theses'],
         ];
 
         $relatedItems = [

@@ -437,7 +437,7 @@ const handleSearch = () => {
 
     <!--
       ──────────────────────────────────────────────────────────────
-      SECTION: Category Cards
+      SECTION: Collection Cards
       ──────────────────────────────────────────────────────────────
     -->
     <main class="px-4 py-20 mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -719,7 +719,7 @@ const handleSearch = () => {
           <div class="bg-green-50 border border-green-200 p-6 rounded-2xl">
             <p class="text-xs font-black uppercase tracking-widest text-green-600 mb-3">✓ ใช้แบบนี้ (Inertia Link)</p>
             <code class="text-sm text-slate-700 block mb-3 bg-white p-3 rounded-xl border border-slate-100">
-              &lt;Link href="/category/1"&gt;คณะวิทย์&lt;/Link&gt;
+              &lt;Link href="/collection/1"&gt;คณะวิทย์&lt;/Link&gt;
             </code>
             <p class="text-xs text-slate-600">
               → Navigate แบบ SPA: fetch JSON, Vue re-render<br/>
@@ -731,7 +731,7 @@ const handleSearch = () => {
           <div class="bg-red-50 border border-red-200 p-6 rounded-2xl">
             <p class="text-xs font-black uppercase tracking-widest text-red-600 mb-3">✗ หลีกเลี่ยง (HTML a tag)</p>
             <code class="text-sm text-slate-700 block mb-3 bg-white p-3 rounded-xl border border-slate-100">
-              &lt;a href="/category/1"&gt;คณะวิทย์&lt;/a&gt;
+              &lt;a href="/collection/1"&gt;คณะวิทย์&lt;/a&gt;
             </code>
             <p class="text-xs text-slate-600">
               → Full page reload: โหลด HTML, CSS, JS ใหม่ทั้งหมด<br/>
@@ -749,7 +749,7 @@ const handleSearch = () => {
           <Link :href="route('home')" class="bg-[#1e3a8a] text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-blue-800 transition-colors">
             หน้าแรก (GET)
           </Link>
-          <Link :href="route('category.show', { id: 1 })" class="bg-yellow-400 text-slate-900 px-6 py-3 rounded-xl text-sm font-bold hover:bg-yellow-300 transition-colors">
+          <Link :href="route('collection.show', { id: 1 })" class="bg-yellow-400 text-slate-900 px-6 py-3 rounded-xl text-sm font-bold hover:bg-yellow-300 transition-colors">
             หมวดหมู่ที่ 1
           </Link>
         </div>

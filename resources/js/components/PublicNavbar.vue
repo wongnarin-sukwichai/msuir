@@ -27,7 +27,7 @@ const collectionGroups = [
     {
         title: 'Institutional Repository (MSU-IR)',
         links: [
-            { name: 'MSU e-Theses', href: '#' },
+            { name: 'MSU e-Theses', href: '/collection/1' },
             { name: 'MSU e-Independent Studies (IS)', href: '#' },
             { name: 'MSU e-Senior Projects', href: '#' },
             { name: 'MSU e-Researches', href: '#' },

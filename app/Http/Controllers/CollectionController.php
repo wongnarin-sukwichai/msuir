@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 
-class CategoryController extends Controller
+class CollectionController extends Controller
 {
     public function show(string $id)
     {
-        // ข้อมูลทดสอบ — ในอนาคตเปลี่ยนเป็นดึงจาก DB ด้วย Category::findOrFail($id)
-        $category = [
+        // ข้อมูลทดสอบ — ในอนาคตเปลี่ยนเป็นดึงจาก DB ด้วย Collection::findOrFail($id)
+        $collection = [
             'id'          => (int) $id,
             'name'        => 'MSU e-Theses',
             'name_en'     => 'Theses & Dissertations',
@@ -85,13 +85,14 @@ class CategoryController extends Controller
             ],
         ];
 
-        return Inertia::render('Category', [
-            'category'           => $category,
+        return Inertia::render('Collection', [
+            'collection'         => $collection,
             'items'              => $items,
             'totalItems'         => 12543,
             'currentPage'        => 1,
             'lastPage'           => 1255,
             'availableYears'     => [2567, 2566, 2565, 2564, 2563, 2562, 2561, 2560],
+            'availableBookTypes' => ['งานวิจัย', 'คู่มือปฏิบัติงาน', 'หนังสืออิเล็กทรอนิกส์'],
             'availableFaculties' => [
                 'คณะศึกษาศาสตร์',
                 'คณะวิทยาการสารสนเทศ',

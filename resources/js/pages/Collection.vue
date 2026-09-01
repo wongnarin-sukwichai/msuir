@@ -4,7 +4,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 // --- Types ---
-interface CategoryItem {
+interface CollectionItem {
     id: number;
     title: string;
     title_en?: string;
@@ -18,7 +18,7 @@ interface CategoryItem {
     views: number;
 }
 
-interface Category {
+interface Collection {
     id: number;
     name: string;
     name_en: string;
@@ -31,16 +31,17 @@ interface Category {
 // --- Props (from Inertia / Laravel) ---
 const props = withDefaults(
     defineProps<{
-        category?: Category;
-        items?: CategoryItem[];
+        collection?: Collection;
+        items?: CollectionItem[];
         totalItems?: number;
         currentPage?: number;
         lastPage?: number;
         availableYears?: number[];
         availableFaculties?: string[];
+        availableBookTypes?: string[];
     }>(),
     {
-        category: () => ({
+        collection: () => ({
             id: 1,
             name: 'MSU e-Theses',
             name_en: 'Theses & Dissertations',
@@ -137,6 +138,7 @@ const props = withDefaults(
             'คณะนิติศาสตร์',
             'คณะสถาปัตยกรรมศาสตร์',
         ],
+        availableBookTypes: () => ['งานวิจัย', 'คู่มือปฏิบัติงาน', 'หนังสืออิเล็กทรอนิกส์'],
     },
 );
 
@@ -144,8 +146,10 @@ const props = withDefaults(
 const searchQuery = ref('');
 const selectedYears = ref<number[]>([]);
 const selectedFaculties = ref<string[]>([]);
+const selectedBookTypes = ref<string[]>([]);
 const sortBy = ref<'date' | 'title' | 'downloads' | 'views'>('date');
 const viewMode = ref<'list' | 'grid'>('list');
+const isBookTypeOpen = ref(true);
 const isYearOpen = ref(true);
 const isFacultyOpen = ref(true);
 const isMobileFilterOpen = ref(false);
@@ -176,20 +180,31 @@ const toggleFaculty = (faculty: string) => {
     else selectedFaculties.value.splice(idx, 1);
 };
 
+const toggleBookType = (bookType: string) => {
+    const idx = selectedBookTypes.value.indexOf(bookType);
+    if (idx === -1) selectedBookTypes.value.push(bookType);
+    else selectedBookTypes.value.splice(idx, 1);
+};
+
 const clearFilters = () => {
     searchQuery.value = '';
     selectedYears.value = [];
     selectedFaculties.value = [];
+    selectedBookTypes.value = [];
 };
 
-const hasActiveFilters = computed(() => searchQuery.value || selectedYears.value.length > 0 || selectedFaculties.value.length > 0);
+const hasActiveFilters = computed(
+    () => searchQuery.value || selectedYears.value.length > 0 || selectedFaculties.value.length > 0 || selectedBookTypes.value.length > 0,
+);
 
-const activeFilterCount = computed(() => selectedYears.value.length + selectedFaculties.value.length + (searchQuery.value ? 1 : 0));
+const activeFilterCount = computed(
+    () => selectedYears.value.length + selectedFaculties.value.length + selectedBookTypes.value.length + (searchQuery.value ? 1 : 0),
+);
 </script>
 
 <template>
     <PublicLayout>
-    <Head :title="`${category.name} | MSU Institutional Repository (MSU IR)`" />
+    <Head :title="`${collection.name} | MSU Institutional Repository (MSU IR)`" />
 
         <!-- ===== BREADCRUMB ===== -->
         <div class="bg-white border-b border-slate-100">
@@ -205,7 +220,7 @@ const activeFilterCount = computed(() => selectedYears.value.length + selectedFa
                         <a href="#" class="font-medium transition-colors text-slate-500 hover:text-blue-800">คอลเลกชัน</a>
                     </li>
                     <li><i class="fas fa-chevron-right text-[9px] text-slate-300"></i></li>
-                    <li class="font-bold text-[#1e3a8a]">{{ category.name }}</li>
+                    <li class="font-bold text-[#1e3a8a]">{{ collection.name }}</li>
                 </ol>
             </div>
         </div>
@@ -218,14 +233,14 @@ const activeFilterCount = computed(() => selectedYears.value.length + selectedFa
                 <div class="absolute -bottom-32 left-1/3 h-64 w-64 rounded-full bg-yellow-300 blur-[80px]"></div>
             </div>
             <div class="absolute inset-0 opacity-5">
-                <i :class="['fas absolute -right-8 -bottom-8 text-[20rem]', category.icon]"></i>
+                <i :class="['fas absolute -right-8 -bottom-8 text-[20rem]', collection.icon]"></i>
             </div>
 
             <div class="relative z-10 px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                     <div class="flex items-start gap-5">
                         <div class="flex items-center justify-center w-16 h-16 text-white shrink-0 rounded-2xl bg-white/10 backdrop-blur-sm ring-1 ring-white/20">
-                            <i :class="['fas text-2xl', category.icon]"></i>
+                            <i :class="['fas text-2xl', collection.icon]"></i>
                         </div>
                         <div>
                             <div class="flex items-center gap-3 mb-1">
@@ -233,9 +248,9 @@ const activeFilterCount = computed(() => selectedYears.value.length + selectedFa
                                     MSU-IR Collection
                                 </span>
                             </div>
-                            <h1 class="text-3xl font-black text-white md:text-4xl">{{ category.name }}</h1>
-                            <p class="mt-1 text-sm font-medium text-blue-200/80">{{ category.name_en }}</p>
-                            <p class="max-w-xl mt-3 text-sm leading-relaxed text-blue-100/70">{{ category.description }}</p>
+                            <h1 class="text-3xl font-black text-white md:text-4xl">{{ collection.name }}</h1>
+                            <p class="mt-1 text-sm font-medium text-blue-200/80">{{ collection.name_en }}</p>
+                            <p class="max-w-xl mt-3 text-sm leading-relaxed text-blue-100/70">{{ collection.description }}</p>
                         </div>
                     </div>
 
@@ -294,7 +309,7 @@ const activeFilterCount = computed(() => selectedYears.value.length + selectedFa
                     </div>
 
                     <div class="space-y-4">
-                        <!-- Search within category -->
+                        <!-- Search within collection -->
                         <div class="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-100">
                             <div class="p-5">
                                 <h3 class="mb-3 text-[11px] font-black uppercase tracking-widest text-slate-400">ค้นหาในหมวดนี้</h3>
@@ -331,6 +346,43 @@ const activeFilterCount = computed(() => selectedYears.value.length + selectedFa
                                     {{ f.replace('คณะ', '') }}
                                     <button @click="toggleFaculty(f)" class="ml-0.5 hover:text-red-600"><i class="fas fa-times text-[9px]"></i></button>
                                 </span>
+                                <span v-for="bt in selectedBookTypes" :key="bt" class="flex items-center gap-1 px-3 py-1 text-xs font-bold text-yellow-900 bg-yellow-200 rounded-full">
+                                    {{ bt }}
+                                    <button @click="toggleBookType(bt)" class="ml-0.5 hover:text-red-600"><i class="fas fa-times text-[9px]"></i></button>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Filter: Book type -->
+                        <div class="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-100">
+                            <button
+                                @click="isBookTypeOpen = !isBookTypeOpen"
+                                class="flex items-center justify-between w-full p-5 transition hover:bg-slate-50"
+                            >
+                                <span class="text-[11px] font-black uppercase tracking-widest text-slate-400">ประเภททรัพยากร</span>
+                                <i :class="['fas fa-chevron-down text-[10px] text-slate-400 transition-transform', isBookTypeOpen ? 'rotate-180' : '']"></i>
+                            </button>
+                            <div v-if="isBookTypeOpen" class="px-5 pt-3 pb-5 border-t border-slate-50">
+                                <div class="space-y-2.5">
+                                    <label
+                                        v-for="bookType in availableBookTypes"
+                                        :key="bookType"
+                                        class="flex items-center justify-between cursor-pointer group"
+                                    >
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                @click="toggleBookType(bookType)"
+                                                :class="[
+                                                    'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition',
+                                                    selectedBookTypes.includes(bookType) ? 'border-[#1e3a8a] bg-[#1e3a8a]' : 'border-slate-300 group-hover:border-blue-400',
+                                                ]"
+                                            >
+                                                <i v-if="selectedBookTypes.includes(bookType)" class="fas fa-check text-[8px] text-white"></i>
+                                            </div>
+                                            <span class="text-sm font-medium text-slate-700 group-hover:text-[#1e3a8a]" @click="toggleBookType(bookType)">{{ bookType }}</span>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
                         </div>
 

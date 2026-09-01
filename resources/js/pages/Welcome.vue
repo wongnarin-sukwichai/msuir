@@ -2,7 +2,7 @@
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 
-const categories = [
+const collections = [
     { id: 1, name: 'MSU e-Theses', name_en: 'Theses & Dissertations' },
     { id: 2, name: 'MSU e-Research', name_en: 'Research Papers' },
     { id: 3, name: 'MSU e-Book', name_en: 'Electronic Books' },
@@ -71,9 +71,9 @@ const newReleaseItems = [
                 </div>
 
                 <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-                    <Link v-for="(cat, idx) in categories" :key="cat.id" :href="route('category.show', cat.id)" class="block shadow-lg cursor-pointer category-card group h-72 bg-slate-200">
+                    <Link v-for="(cat, idx) in collections" :key="cat.id" :href="route('collection.show', cat.id)" class="block shadow-lg cursor-pointer collection-card group h-72 bg-slate-200">
                         <img :src="'https://picsum.photos/seed/' + (idx + 71) + '/800/600'" class="object-cover w-full h-full" alt="Cover" />
-                        <div class="absolute inset-0 flex flex-col justify-end p-8 category-overlay">
+                        <div class="absolute inset-0 flex flex-col justify-end p-8 collection-overlay">
                             <h3 class="mb-1 text-2xl font-bold text-white">{{ cat.name }}</h3>
                             <p class="text-sm font-medium text-blue-100">{{ cat.name_en }}</p>
                             <div class="w-0 h-1 mt-4 transition-all duration-500 bg-yellow-400 rounded-full group-hover:w-full"></div>
