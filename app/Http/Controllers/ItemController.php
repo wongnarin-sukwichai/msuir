@@ -2,48 +2,56 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Item;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class ItemController extends Controller
 {
-    public function show(string $id)
+    /** Public single-item page. Only approved items are visible. */
+    public function show(int $id): Response
     {
-        // ข้อมูลทดสอบ — ในอนาคตเปลี่ยนเป็นดึงจาก DB ด้วย Item::findOrFail($id)
-        $item = [
-            'id'          => (int) $id,
-            'title'       => 'ผลของการใช้กลยุทธ์การเรียนรู้แบบร่วมมือที่มีต่อผลสัมฤทธิ์ทางการเรียนวิชาคณิตศาสตร์ของนักเรียนชั้นมัธยมศึกษาปีที่ 3',
-            'title_en'    => 'Effects of Cooperative Learning Strategies on Mathematics Achievement of Grade 9 Students',
-            'authors'     => ['ศิริลักษณ์ วงศ์ประเสริฐ'],
-            'advisors'    => ['รศ.ดร.สมชาย ประทุมมาศ', 'ผศ.ดร.กัลยา วานิชวัฒนา'],
-            'faculty'     => 'คณะศึกษาศาสตร์',
-            'department'  => 'สาขาวิชาหลักสูตรและการสอน',
-            'year'        => 2567,
-            'type'        => 'วิทยานิพนธ์ปริญญาโท',
-            'language'    => 'ภาษาไทย',
-            'abstract'    => 'การวิจัยครั้งนี้มีวัตถุประสงค์เพื่อ 1) ศึกษาผลของการใช้กลยุทธ์การเรียนรู้แบบร่วมมือที่มีต่อผลสัมฤทธิ์ทางการเรียนวิชาคณิตศาสตร์ของนักเรียนชั้นมัธยมศึกษาปีที่ 3 และ 2) ศึกษาความพึงพอใจของนักเรียนที่มีต่อการจัดการเรียนรู้แบบร่วมมือ กลุ่มตัวอย่างเป็นนักเรียนชั้นมัธยมศึกษาปีที่ 3 โรงเรียนในสังกัดสำนักงานเขตพื้นที่การศึกษามัธยมศึกษา จังหวัดมหาสารคาม ภาคเรียนที่ 1 ปีการศึกษา 2567 จำนวน 60 คน',
-            'abstract_en' => 'This research aimed to 1) study the effects of cooperative learning strategies on mathematics achievement of Grade 9 students, and 2) investigate students\' satisfaction with cooperative learning. The sample consisted of 60 Grade 9 students from schools under the Secondary Educational Service Area Office in Mahasarakham Province.',
-            'keywords'    => ['การเรียนรู้แบบร่วมมือ', 'ผลสัมฤทธิ์ทางการเรียน', 'คณิตศาสตร์', 'มัธยมศึกษา', 'Cooperative Learning'],
-            'doi'         => '10.14456/msuir.2567.001',
-            'views'       => 1205,
-            'downloads'   => 234,
-            'files'       => [
-                ['id' => 1, 'name' => 'THESIS_SIRILAK_2567.pdf',   'size' => '4.2 MB', 'pages' => 182, 'type' => 'pdf', 'restricted' => false],
-                ['id' => 2, 'name' => 'ABSTRACT_SIRILAK_2567.pdf', 'size' => '0.5 MB', 'pages' => 4,   'type' => 'pdf', 'restricted' => false],
-                ['id' => 3, 'name' => 'APPENDIX_SIRILAK_2567.pdf', 'size' => '1.8 MB', 'pages' => 45,  'type' => 'pdf', 'restricted' => true],
-            ],
-            'collection'  => ['name' => 'MSU e-Theses', 'slug' => 'theses'],
-        ];
+        $item = Item::query()
+            ->with(['collection', 'department', 'titles', 'people', 'subjects'])
+            ->where('status', 'approved')
+            ->findOrFail($id);
 
-        $relatedItems = [
-            ['id' => 2, 'title' => 'การพัฒนาชุดกิจกรรมการเรียนรู้แบบโครงงานเพื่อส่งเสริมทักษะการคิดเชิงสร้างสรรค์',          'author' => 'ธนกร สุวรรณรัตน์',  'year' => 2567, 'type' => 'วิทยานิพนธ์ปริญญาโท'],
-            ['id' => 3, 'title' => 'ผลการใช้รูปแบบการสอนแบบสืบเสาะหาความรู้ต่อผลสัมฤทธิ์ทางการเรียนวิทยาศาสตร์',              'author' => 'อรุณี ภูมิไพศาล',    'year' => 2566, 'type' => 'วิทยานิพนธ์ปริญญาโท'],
-            ['id' => 4, 'title' => 'การพัฒนาทักษะการคิดวิจารณญาณของนักเรียนผ่านกิจกรรมการเรียนรู้เชิงรุก',                     'author' => 'มนัสชัย เรืองศรี',   'year' => 2566, 'type' => 'ดุษฎีนิพนธ์ปริญญาเอก'],
-            ['id' => 5, 'title' => 'ประสิทธิผลของสื่อดิจิทัลเชิงโต้ตอบในการเรียนการสอนระดับมัธยมศึกษา',                        'author' => 'จินตนา พลอยสุข',    'year' => 2565, 'type' => 'วิทยานิพนธ์ปริญญาโท'],
-        ];
+        $related = Item::query()
+            ->where('collection_id', $item->collection_id)
+            ->where('status', 'approved')
+            ->whereKeyNot($item->id)
+            ->with(['collection', 'creators'])
+            ->orderByDesc('id')
+            ->limit(4)
+            ->get()
+            ->map(fn (Item $r) => [
+                'id' => $r->id,
+                'title' => $r->title,
+                'author' => $r->creators->pluck('name')->implode(', ') ?: null,
+                'year' => $r->year_issued,
+                'type' => $r->collection?->name_th ?: $r->collection?->name_en,
+            ]);
+
+        $collectionName = $item->collection?->name_th ?: $item->collection?->name_en;
 
         return Inertia::render('Item', [
-            'item'         => $item,
-            'relatedItems' => $relatedItems,
+            'item' => [
+                'id' => $item->id,
+                'title' => $item->title,
+                'title_en' => $item->titles->first()?->title,
+                'authors' => $item->creators->pluck('name')->values()->all(),
+                'contributors' => $item->contributors->pluck('name')->values()->all(),
+                'faculty' => $item->department?->name,
+                'year' => $item->year_issued,
+                'type' => $collectionName,
+                'language' => $item->language === 'eng' ? 'English' : 'ภาษาไทย',
+                'abstract' => $item->description,
+                'keywords' => $item->subjects->pluck('value')->values()->all(),
+                'rights' => $item->rights,
+                'fulltext_url' => $item->fulltext,
+                'collection' => ['id' => $item->collection_id, 'name' => $collectionName],
+            ],
+            'relatedItems' => $related,
         ]);
     }
 }

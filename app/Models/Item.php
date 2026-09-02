@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Item extends Model
 {
@@ -23,12 +25,21 @@ class Item extends Model
         'format',
         'degree',
         'fulltext_url',
+        'fulltext_path',
         'status',
+        'review_note',
     ];
 
     protected $casts = [
         'year_issued' => 'integer',
     ];
+
+    /** Resolved link to the full text: a pasted URL wins, else the uploaded PDF on the public disk. */
+    protected function fulltext(): Attribute
+    {
+        return Attribute::get(fn (): ?string => $this->fulltext_url
+            ?: ($this->fulltext_path ? Storage::disk('public')->url($this->fulltext_path) : null));
+    }
 
     public function collection(): BelongsTo
     {

@@ -46,6 +46,20 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
                 'impersonating' => $request->session()->has('impersonator_id'),
             ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'import' => fn () => $request->session()->get('import'),
+            ],
+            // Public navbar "Collection" dropdown — categories → their collections.
+            'publicNav' => fn () => \App\Models\Category::with(['collections' => fn ($q) => $q->orderBy('sort_order')])
+                ->orderBy('sort_order')
+                ->get()
+                ->map(fn ($cat) => [
+                    'title' => $cat->name_en,
+                    'links' => $cat->collections
+                        ->map(fn ($c) => ['name' => $c->name_th ?: $c->name_en, 'href' => "/collection/{$c->id}"])
+                        ->all(),
+                ])->all(),
         ]);
     }
 }

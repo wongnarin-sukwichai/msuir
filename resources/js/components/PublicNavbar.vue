@@ -22,38 +22,11 @@ const navLinks: NavLink[] = [
     { name: 'Contact', href: '#' },
 ];
 
-// TODO: เปลี่ยนมาอ่านจาก usePage().props.collections เมื่อ backend พร้อม
-const collectionGroups = [
-    {
-        title: 'Institutional Repository (MSU-IR)',
-        links: [
-            { name: 'MSU e-Theses', href: '/collection/1' },
-            { name: 'MSU e-Independent Studies (IS)', href: '#' },
-            { name: 'MSU e-Senior Projects', href: '#' },
-            { name: 'MSU e-Researches', href: '#' },
-            { name: 'MSU e-Books', href: '#' },
-            { name: 'MSU e-Articles', href: '#' },
-        ],
-    },
-    {
-        title: 'Archive and Rare books',
-        links: [
-            { name: 'Local Wisdom Collection', href: '#' },
-            { name: 'Rare Books', href: '#' },
-            { name: 'Manuscripts', href: '#' },
-            { name: 'Historical Photographs', href: '#' },
-        ],
-    },
-    {
-        title: 'Multimedia & E-Learning',
-        links: [
-            { name: 'MSU Multimedia Archives', href: '#' },
-            { name: 'E-Lecture Series', href: '#' },
-            { name: 'Research Reports', href: '#' },
-            { name: 'Free e-Books', href: '#' },
-        ],
-    },
-];
+interface CollectionGroup {
+    title: string;
+    links: { name: string; href: string }[];
+}
+const collectionGroups = computed<CollectionGroup[]>(() => (page.props.publicNav as CollectionGroup[]) ?? []);
 
 watch(isMobileMenuOpen, (val) => {
     if (!val) isCollectionOpen.value = false;

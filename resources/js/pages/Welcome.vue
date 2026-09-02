@@ -1,28 +1,26 @@
 <script setup lang="ts">
 import PublicLayout from '@/layouts/PublicLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
-const collections = [
-    { id: 1, name: 'MSU e-Theses', name_en: 'Theses & Dissertations' },
-    { id: 2, name: 'MSU e-Research', name_en: 'Research Papers' },
-    { id: 3, name: 'MSU e-Book', name_en: 'Electronic Books' },
-    { id: 4, name: 'MSU e-Journal', name_en: 'Journals & Articles' },
-    { id: 5, name: 'Senior Project', name_en: 'Undergraduate Projects' },
-    { id: 6, name: 'Conference Papers', name_en: 'Conference Proceedings' },
-];
+interface HomeCollection { id: number; name: string; name_en: string; count: number }
+interface HomeItem { id: number; title: string; author: string | null; faculty: string | null; collection: string | null; year: number | null }
 
-const recommendedItems = [
-    { id: 1, title: 'ตัวอย่างผลงานวิจัยเพื่อการพัฒนาท้องถิ่นอย่างยั่งยืน ฉบับที่ 1', author: 'นักวิจัย มหาวิทยาลัยมหาสารคาม' },
-    { id: 2, title: 'ตัวอย่างผลงานวิจัยเพื่อการพัฒนาท้องถิ่นอย่างยั่งยืน ฉบับที่ 2', author: 'นักวิจัย มหาวิทยาลัยมหาสารคาม' },
-];
+const props = defineProps<{
+    collections: HomeCollection[];
+    recommended: HomeItem[];
+    newReleases: HomeItem[];
+    stats: { total: number; byCategory: { name: string; count: number }[] };
+}>();
 
-const newReleaseItems = [
-    { id: 1, title: 'รายงานวิจัยฉบับสมบูรณ์ประจำปีงบประมาณ 2569 ลำดับที่ 1', faculty: 'คณะศิลปกรรมศาสตร์' },
-    { id: 2, title: 'รายงานวิจัยฉบับสมบูรณ์ประจำปีงบประมาณ 2569 ลำดับที่ 2', faculty: 'คณะวิทยาศาสตร์' },
-    { id: 3, title: 'รายงานวิจัยฉบับสมบูรณ์ประจำปีงบประมาณ 2569 ลำดับที่ 3', faculty: 'คณะมนุษยศาสตร์และสังคมศาสตร์' },
-    { id: 4, title: 'รายงานวิจัยฉบับสมบูรณ์ประจำปีงบประมาณ 2569 ลำดับที่ 4', faculty: 'คณะศึกษาศาสตร์' },
-    { id: 5, title: 'รายงานวิจัยฉบับสมบูรณ์ประจำปีงบประมาณ 2569 ลำดับที่ 5', faculty: 'คณะสาธารณสุขศาสตร์' },
-];
+const searchTerm = ref('');
+const submitSearch = () => {
+    const q = searchTerm.value.trim();
+    if (!q) return;
+    // No global search yet — send to the largest MSU-IR collection with the term.
+    const target = props.collections.slice().sort((a, b) => b.count - a.count)[0]?.id ?? 2;
+    router.get(route('collection.show', target), { q });
+};
 </script>
 
 <template>
@@ -44,11 +42,12 @@ const newReleaseItems = [
                     จากมหาวิทยาลัยมหาสารคาม
                 </p>
 
-                <form @submit.prevent class="relative max-w-3xl mx-auto group">
+                <form @submit.prevent="submitSearch" class="relative max-w-3xl mx-auto group">
                     <div class="absolute inset-y-0 flex items-center pointer-events-none left-6">
                         <i class="transition-colors fas fa-search text-slate-400 group-focus-within:text-yellow-500"></i>
                     </div>
                     <input
+                        v-model="searchTerm"
                         type="text"
                         placeholder="ค้นหาชื่อเรื่อง, ผู้แต่ง, หัวข้อวิจัย..."
                         class="w-full py-5 text-lg transition-all bg-white border-2 shadow-xl rounded-2xl border-slate-100 px-14 text-slate-900 shadow-slate-200/50 placeholder:text-slate-400 focus:border-yellow-400 focus:outline-none focus:ring-4 focus:ring-yellow-400/10"
@@ -76,7 +75,8 @@ const newReleaseItems = [
                         <div class="absolute inset-0 flex flex-col justify-end p-8 collection-overlay">
                             <h3 class="mb-1 text-2xl font-bold text-white">{{ cat.name }}</h3>
                             <p class="text-sm font-medium text-blue-100">{{ cat.name_en }}</p>
-                            <div class="w-0 h-1 mt-4 transition-all duration-500 bg-yellow-400 rounded-full group-hover:w-full"></div>
+                            <p class="mt-1 text-xs font-bold text-yellow-300">{{ cat.count.toLocaleString() }} รายการ</p>
+                            <div class="w-0 h-1 mt-3 transition-all duration-500 bg-yellow-400 rounded-full group-hover:w-full"></div>
                         </div>
                     </Link>
                 </div>
@@ -96,7 +96,7 @@ const newReleaseItems = [
                         </div>
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <Link
-                                v-for="rItem in recommendedItems"
+                                v-for="rItem in recommended"
                                 :key="rItem.id"
                                 :href="route('item.show', rItem.id)"
                                 class="block p-6 transition-all bg-white border cursor-pointer card-shadow group rounded-3xl border-slate-100"
@@ -111,10 +111,11 @@ const newReleaseItems = [
                                         <h3 class="font-bold leading-snug transition-colors line-clamp-2 text-slate-900 group-hover:text-blue-800">
                                             {{ rItem.title }}
                                         </h3>
-                                        <p class="mt-2 text-xs text-slate-500">{{ rItem.author }}</p>
+                                        <p class="mt-2 text-xs text-slate-500">{{ rItem.author ?? 'ไม่ระบุผู้แต่ง' }}</p>
                                     </div>
                                 </div>
                             </Link>
+                            <p v-if="recommended.length === 0" class="text-sm text-slate-400">ยังไม่มีรายการ</p>
                         </div>
                     </section>
 
@@ -129,7 +130,7 @@ const newReleaseItems = [
                             </h2>
                         </div>
                         <div class="divide-y divide-slate-50 overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-sm">
-                            <Link v-for="nItem in newReleaseItems" :key="nItem.id" :href="route('item.show', nItem.id)" class="flex items-center p-6 transition-colors cursor-pointer group hover:bg-slate-50">
+                            <Link v-for="nItem in newReleases" :key="nItem.id" :href="route('item.show', nItem.id)" class="flex items-center p-6 transition-colors cursor-pointer group hover:bg-slate-50">
                                 <div
                                     class="flex items-center justify-center w-10 h-10 mr-6 transition-colors rounded-lg shrink-0 bg-slate-100 text-slate-400 group-hover:bg-blue-200 group-hover:text-blue-700"
                                 >
@@ -141,51 +142,35 @@ const newReleaseItems = [
                                     >
                                         {{ nItem.title }}
                                     </h3>
-                                    <p class="mt-1 text-xs text-slate-400">อัปเดตเมื่อ: 2 ชั่วโมงที่ผ่านมา | โดย {{ nItem.faculty }}</p>
+                                    <p class="mt-1 text-xs text-slate-400">
+                                        {{ nItem.collection ?? '—' }}<span v-if="nItem.faculty"> · {{ nItem.faculty }}</span><span v-if="nItem.year"> · {{ nItem.year }}</span>
+                                    </p>
                                 </div>
                                 <i class="ml-4 transition-colors fas fa-chevron-right text-slate-200 group-hover:text-blue-900"></i>
                             </Link>
+                            <p v-if="newReleases.length === 0" class="p-6 text-sm text-slate-400">ยังไม่มีรายการ</p>
                         </div>
                     </section>
                 </div>
 
                 <aside class="space-y-10">
-                    <!-- Search Assistant Widget -->
+                    <!-- Total Widget -->
                     <div class="relative overflow-hidden rounded-[2rem] bg-[#1e3a8a] p-8 text-white shadow-xl shadow-blue-900/20">
                         <i class="absolute fas fa-graduation-cap -bottom-6 -right-6 rotate-12 text-9xl opacity-10"></i>
-                        <h3 class="relative z-10 mb-3 text-xl font-bold">สืบค้นขั้นสูง</h3>
-                        <p class="relative z-10 mb-6 text-sm leading-relaxed text-blue-200/80">ค้นหาผลงานตามปีการศึกษา ผู้แต่ง หรือสาขาวิชาเจาะจง</p>
-                        <button
-                            class="relative z-10 rounded-xl bg-yellow-400 px-6 py-2.5 text-xs font-black text-[#1e3a8a] shadow-lg transition-all hover:bg-white"
-                        >
-                            เริ่มสืบค้น
-                        </button>
+                        <h3 class="relative z-10 mb-1 text-xs font-black uppercase tracking-widest text-blue-200/80">ทรัพยากรทั้งหมด</h3>
+                        <p class="relative z-10 text-4xl font-black">{{ stats.total.toLocaleString() }}</p>
+                        <p class="relative z-10 mt-2 text-sm text-blue-200/80">รายการที่เผยแพร่แล้วในคลัง</p>
                     </div>
 
                     <!-- Statistics Widget -->
                     <div class="rounded-[2rem] border border-slate-100 bg-white p-8 shadow-sm">
                         <h3 class="text-md mb-6 border-b pb-4 font-black uppercase tracking-[0.2em] text-yellow-500">Discover</h3>
                         <div class="space-y-6">
-                            <div>
-                                <p class="text-[10px] font-bold uppercase text-slate-400">Social Sciences</p>
-                                <p class="text-2xl font-black tracking-tight text-blue-900">1,362</p>
+                            <div v-for="cat in stats.byCategory" :key="cat.name">
+                                <p class="text-[10px] font-bold uppercase text-slate-400">{{ cat.name }}</p>
+                                <p class="text-2xl font-black tracking-tight text-blue-900">{{ cat.count.toLocaleString() }}</p>
                             </div>
-                            <div>
-                                <p class="text-[10px] font-bold uppercase text-slate-400">Education</p>
-                                <p class="text-2xl font-black tracking-tight text-slate-800">994</p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-bold uppercase text-slate-400">Arts and Humanities</p>
-                                <p class="text-2xl font-black tracking-tight text-slate-800">984</p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-bold uppercase text-slate-400">Education science</p>
-                                <p class="text-2xl font-black tracking-tight text-slate-800">280</p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-bold uppercase text-slate-400">Music and performing arts</p>
-                                <p class="text-2xl font-black tracking-tight text-slate-800">274</p>
-                            </div>
+                            <p v-if="stats.byCategory.length === 0" class="text-sm text-slate-400">ยังไม่มีข้อมูล</p>
                         </div>
                     </div>
                 </aside>

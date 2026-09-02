@@ -2,111 +2,101 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Collection;
+use App\Models\Dept;
+use App\Models\Item;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class CollectionController extends Controller
 {
-    public function show(string $id)
+    public function show(Request $request, int $id)
     {
-        // ข้อมูลทดสอบ — ในอนาคตเปลี่ยนเป็นดึงจาก DB ด้วย Collection::findOrFail($id)
-        $collection = [
-            'id'          => (int) $id,
-            'name'        => 'MSU e-Theses',
-            'name_en'     => 'Theses & Dissertations',
-            'description' => 'วิทยานิพนธ์และดุษฎีนิพนธ์ของนิสิตระดับบัณฑิตศึกษา มหาวิทยาลัยมหาสารคาม รวบรวมผลงานทางวิชาการที่ผ่านการอนุมัติจากคณะกรรมการสอบวิทยานิพนธ์',
-            'icon'        => 'fa-graduation-cap',
-            'total'       => 12543,
-            'slug'        => 'theses',
-        ];
+        $collection = Collection::with('category')->findOrFail($id);
 
-        $items = [
-            [
-                'id'       => 1,
-                'title'    => 'ผลของการใช้กลยุทธ์การเรียนรู้แบบร่วมมือที่มีต่อผลสัมฤทธิ์ทางการเรียนวิชาคณิตศาสตร์ของนักเรียนชั้นมัธยมศึกษาปีที่ 3',
-                'title_en' => 'Effects of Cooperative Learning Strategies on Mathematics Achievement of Grade 9 Students',
-                'author'   => 'ศิริลักษณ์ วงศ์ประเสริฐ',
-                'advisor'  => 'รศ.ดร.สมชาย ประทุมมาศ',
-                'faculty'  => 'คณะศึกษาศาสตร์',
-                'year'     => 2567,
-                'type'     => 'วิทยานิพนธ์ปริญญาโท',
-                'abstract' => 'การวิจัยครั้งนี้มีวัตถุประสงค์เพื่อศึกษาผลของการใช้กลยุทธ์การเรียนรู้แบบร่วมมือที่มีต่อผลสัมฤทธิ์ทางการเรียนวิชาคณิตศาสตร์ กลุ่มตัวอย่างเป็นนักเรียนชั้นมัธยมศึกษาปีที่ 3 โรงเรียนในสังกัดสำนักงานเขตพื้นที่การศึกษา จังหวัดมหาสารคาม',
-                'downloads' => 234,
-                'views'     => 1205,
-            ],
-            [
-                'id'       => 2,
-                'title'    => 'การพัฒนาระบบสารสนเทศเพื่อการจัดการข้อมูลนิสิตในระดับอุดมศึกษา: กรณีศึกษา มหาวิทยาลัยในภาคตะวันออกเฉียงเหนือ',
-                'title_en' => 'Development of Information System for Student Data Management in Higher Education',
-                'author'   => 'ธนกร สุวรรณรัตน์',
-                'advisor'  => 'ผศ.ดร.วราภรณ์ ชัยมงคล',
-                'faculty'  => 'คณะวิทยาการสารสนเทศ',
-                'year'     => 2567,
-                'type'     => 'วิทยานิพนธ์ปริญญาโท',
-                'abstract' => 'การวิจัยนี้มุ่งพัฒนาระบบสารสนเทศที่มีประสิทธิภาพสำหรับการจัดการข้อมูลนิสิตในระดับอุดมศึกษา โดยใช้เทคโนโลยีสมัยใหม่และแนวคิดการออกแบบที่เน้นผู้ใช้เป็นศูนย์กลาง',
-                'downloads' => 189,
-                'views'     => 876,
-            ],
-            [
-                'id'       => 3,
-                'title'    => 'ความหลากหลายทางชีวภาพของพืชสมุนไพรในป่าชุมชนจังหวัดมหาสารคาม',
-                'title_en' => 'Biodiversity of Medicinal Plants in Community Forests of Mahasarakham Province',
-                'author'   => 'อรุณี ภูมิไพศาล',
-                'advisor'  => 'รศ.ดร.พิชัย สิทธิโชค',
-                'faculty'  => 'คณะวิทยาศาสตร์',
-                'year'     => 2566,
-                'type'     => 'ดุษฎีนิพนธ์ปริญญาเอก',
-                'abstract' => 'การศึกษาความหลากหลายทางชีวภาพของพืชสมุนไพรในป่าชุมชนจังหวัดมหาสารคาม ทำการสำรวจและเก็บตัวอย่างพืชในพื้นที่ป่าชุมชน 15 แห่ง พบพืชสมุนไพรจำนวน 312 ชนิด จาก 98 วงศ์',
-                'downloads' => 412,
-                'views'     => 2341,
-            ],
-            [
-                'id'      => 4,
-                'title'   => 'การวิเคราะห์โครงสร้างทางวากยสัมพันธ์ของภาษาไทยถิ่นอีสาน: แนวทางภาษาศาสตร์เชิงประวัติ',
-                'author'  => 'มนัสชัย เรืองศรี',
-                'advisor' => 'ศ.ดร.นภาพร จันทรเสนา',
-                'faculty' => 'คณะมนุษยศาสตร์และสังคมศาสตร์',
-                'year'    => 2566,
-                'type'    => 'ดุษฎีนิพนธ์ปริญญาเอก',
-                'abstract' => 'การศึกษาครั้งนี้มุ่งวิเคราะห์โครงสร้างทางวากยสัมพันธ์ของภาษาไทยถิ่นอีสานโดยใช้กรอบแนวคิดทางภาษาศาสตร์เชิงประวัติ เก็บข้อมูลจากชุมชนที่ใช้ภาษาถิ่นอีสานใน 8 จังหวัด',
-                'downloads' => 156,
-                'views'     => 743,
-            ],
-            [
-                'id'      => 5,
-                'title'   => 'ประสิทธิผลของโปรแกรมการดูแลสุขภาพผู้สูงอายุโดยชุมชนมีส่วนร่วม ในเขตอำเภอเมือง จังหวัดมหาสารคาม',
-                'author'  => 'จินตนา พลอยสุข',
-                'advisor' => 'รศ.ดร.กิตติศักดิ์ วงศ์สาโรจน์',
-                'faculty' => 'คณะสาธารณสุขศาสตร์',
-                'year'    => 2565,
-                'type'    => 'วิทยานิพนธ์ปริญญาโท',
-                'abstract' => 'การวิจัยเชิงปฏิบัติการครั้งนี้มีวัตถุประสงค์เพื่อศึกษาประสิทธิผลของโปรแกรมการดูแลสุขภาพผู้สูงอายุโดยชุมชนมีส่วนร่วม ซึ่งประกอบด้วยกิจกรรมส่งเสริมสุขภาพ การตรวจคัดกรองโรค และการติดตามดูแล',
-                'downloads' => 298,
-                'views'     => 1567,
-            ],
-        ];
+        // --- current filter state (round-trips through the URL) ---
+        $search = trim((string) $request->query('q', ''));
+        $years = array_values(array_filter(array_map('intval', (array) $request->query('years', []))));
+        $faculties = array_values(array_filter(array_map('strval', (array) $request->query('faculties', []))));
+        $sort = in_array($request->query('sort'), ['date', 'title'], true) ? $request->query('sort') : 'date';
+
+        // --- items query (public: approved only) ---
+        $query = $collection->items()
+            ->where('status', 'approved')
+            ->with([
+                'titles' => fn ($q) => $q->limit(1),
+                'creators',
+                'department',
+            ]);
+
+        if ($search !== '') {
+            $query->where(function ($w) use ($search) {
+                $w->where('title', 'like', "%{$search}%")
+                    ->orWhereHas('people', fn ($p) => $p->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('titles', fn ($t) => $t->where('title', 'like', "%{$search}%"));
+            });
+        }
+        if ($years !== []) {
+            $query->whereIn('year_issued', $years);
+        }
+        if ($faculties !== []) {
+            $query->whereHas('department', fn ($d) => $d->whereIn('name', $faculties));
+        }
+
+        $sort === 'title'
+            ? $query->orderBy('title')
+            : $query->orderByDesc('year_issued')->orderByDesc('id');
+
+        $items = $query->paginate(10)->withQueryString();
+
+        // --- facet options: from the whole (approved) collection, not the filtered set ---
+        $availableYears = $collection->items()
+            ->where('status', 'approved')
+            ->whereNotNull('year_issued')
+            ->distinct()
+            ->orderByDesc('year_issued')
+            ->pluck('year_issued');
+
+        $facultyIds = $collection->items()
+            ->where('status', 'approved')
+            ->whereNotNull('department_id')
+            ->distinct()
+            ->pluck('department_id');
+        $availableFaculties = Dept::whereIn('id', $facultyIds)->orderBy('name')->pluck('name');
 
         return Inertia::render('Collection', [
-            'collection'         => $collection,
-            'items'              => $items,
-            'totalItems'         => 12543,
-            'currentPage'        => 1,
-            'lastPage'           => 1255,
-            'availableYears'     => [2567, 2566, 2565, 2564, 2563, 2562, 2561, 2560],
-            'availableBookTypes' => ['งานวิจัย', 'คู่มือปฏิบัติงาน', 'หนังสืออิเล็กทรอนิกส์'],
-            'availableFaculties' => [
-                'คณะศึกษาศาสตร์',
-                'คณะวิทยาการสารสนเทศ',
-                'คณะวิทยาศาสตร์',
-                'คณะมนุษยศาสตร์และสังคมศาสตร์',
-                'คณะสาธารณสุขศาสตร์',
-                'คณะวิศวกรรมศาสตร์',
-                'คณะการบัญชีและการจัดการ',
-                'คณะแพทยศาสตร์',
-                'คณะพยาบาลศาสตร์',
-                'คณะศิลปกรรมศาสตร์',
-                'คณะนิติศาสตร์',
-                'คณะสถาปัตยกรรมศาสตร์',
+            'collection' => [
+                'id' => $collection->id,
+                'name' => $collection->name_th ?: $collection->name_en,
+                'name_en' => $collection->name_en,
+                'category' => $collection->category?->name_en,
+                'description' => null, // no per-collection description in the DB yet
+                'icon' => 'fa-book',
             ],
+            'items' => collect($items->items())->map(fn (Item $it) => [
+                'id' => $it->id,
+                'title' => $it->title,
+                'title_en' => $it->titles->first()?->title,
+                'author' => $it->creators->pluck('name')->implode(', ') ?: null,
+                'faculty' => $it->department?->name,
+                'year' => $it->year_issued,
+                'language' => $it->language,
+                'abstract' => $it->description,
+            ])->all(),
+            'pagination' => [
+                'total' => $items->total(),
+                'currentPage' => $items->currentPage(),
+                'lastPage' => $items->lastPage(),
+                'perPage' => $items->perPage(),
+            ],
+            'filters' => [
+                'q' => $search,
+                'years' => $years,
+                'faculties' => $faculties,
+                'sort' => $sort,
+            ],
+            'availableYears' => $availableYears,
+            'availableFaculties' => $availableFaculties,
         ]);
     }
 }
