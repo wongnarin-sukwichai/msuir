@@ -41,6 +41,8 @@ class HandleInertiaRequests extends Middleware
         return array_merge(parent::share($request), [
             ...parent::share($request),
             'name' => config('app.name'),
+            // Base URL incl. any sub-directory — prepend to static files in public/ (e.g. /images/…).
+            'appUrl' => rtrim((string) config('app.url'), '/'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $request->user(),

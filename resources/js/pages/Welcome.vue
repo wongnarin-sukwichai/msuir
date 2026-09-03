@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PublicLayout from '@/layouts/PublicLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 interface HomeCollection { id: number; name: string; name_en: string; count: number }
@@ -13,9 +13,11 @@ const props = defineProps<{
     stats: { total: number; byCategory: { name: string; count: number }[] };
 }>();
 
-// Category card background: real file at /public/images/collections/{id}.jpg,
-// otherwise fall back to a random placeholder so a missing file never shows broken.
-const catImage = (cat: HomeCollection) => `/images/collections/${cat.id}.png`;
+// Category card background: real file at public/images/collections/{id}.png
+// (prefixed with the app base URL so it works under a sub-directory deploy);
+// falls back to a random placeholder so a missing file never shows broken.
+const appUrl = (usePage().props.appUrl as string | undefined) ?? '';
+const catImage = (cat: HomeCollection) => `${appUrl}/images/collections/${cat.id}.png`;
 const onCatImageError = (e: Event, idx: number) => {
     const img = e.target as HTMLImageElement;
     if (img.dataset.fallback) return;
