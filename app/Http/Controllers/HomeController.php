@@ -14,7 +14,7 @@ class HomeController extends Controller
     {
         $collections = Collection::query()
             ->withCount(['items as items_count' => fn ($q) => $q->where('status', 'approved')])
-            ->orderBy('sort_order')
+            ->orderBy('id')
             ->get()
             ->map(fn (Collection $c) => [
                 'id' => $c->id,

@@ -13,6 +13,24 @@ const props = defineProps<{
     stats: { total: number; byCategory: { name: string; count: number }[] };
 }>();
 
+// Category card background: real file at /public/images/collections/{id}.jpg,
+// otherwise fall back to a random placeholder so a missing file never shows broken.
+const catImage = (cat: HomeCollection) => `/images/collections/${cat.id}.png`;
+const onCatImageError = (e: Event, idx: number) => {
+    const img = e.target as HTMLImageElement;
+    if (img.dataset.fallback) return;
+    img.dataset.fallback = '1';
+    img.src = `https://picsum.photos/seed/${idx + 71}/700/600`;
+};
+
+const catScroller = ref<HTMLElement | null>(null);
+const scrollCats = (dir: 1 | -1) => {
+    const el = catScroller.value;
+    if (!el) return;
+    // one card + gap ≈ 340 + 24
+    el.scrollBy({ left: dir * 364, behavior: 'smooth' });
+};
+
 const searchTerm = ref('');
 const submitSearch = () => {
     const q = searchTerm.value.trim();
@@ -64,14 +82,40 @@ const submitSearch = () => {
 
         <main class="px-4 py-20 mx-auto max-w-7xl sm:px-6 lg:px-8">
             <section class="mb-24">
-                <div class="flex items-center mb-10 space-x-4">
-                    <div class="h-10 w-1.5 rounded-full bg-yellow-400"></div>
-                    <h2 class="text-3xl font-black tracking-tight text-slate-900">หมวดหมู่ทรัพยากร</h2>
+                <div class="flex items-center justify-between mb-10">
+                    <div class="flex items-center space-x-4">
+                        <div class="h-10 w-1.5 rounded-full bg-yellow-400"></div>
+                        <h2 class="text-3xl font-black tracking-tight text-slate-900">หมวดหมู่ทรัพยากร</h2>
+                    </div>
+                    <div class="items-center hidden gap-2 sm:flex">
+                        <button
+                            @click="scrollCats(-1)"
+                            class="flex items-center justify-center transition border rounded-full h-11 w-11 border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-[#1e3a8a] active:scale-95"
+                            aria-label="ก่อนหน้า"
+                        >
+                            <i class="text-sm fas fa-chevron-left"></i>
+                        </button>
+                        <button
+                            @click="scrollCats(1)"
+                            class="flex items-center justify-center transition border rounded-full h-11 w-11 border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-[#1e3a8a] active:scale-95"
+                            aria-label="ถัดไป"
+                        >
+                            <i class="text-sm fas fa-chevron-right"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-                    <Link v-for="(cat, idx) in collections" :key="cat.id" :href="route('collection.show', cat.id)" class="block shadow-lg cursor-pointer collection-card group h-72 bg-slate-200">
-                        <img :src="'https://picsum.photos/seed/' + (idx + 71) + '/800/600'" class="object-cover w-full h-full" alt="Cover" />
+                <div
+                    ref="catScroller"
+                    class="flex gap-6 px-1 pb-3 -mx-1 overflow-x-auto cat-slider snap-x snap-mandatory scroll-smooth"
+                >
+                    <Link
+                        v-for="(cat, idx) in collections"
+                        :key="cat.id"
+                        :href="route('collection.show', cat.id)"
+                        class="shrink-0 snap-start w-[280px] sm:w-[340px] shadow-lg cursor-pointer collection-card group h-72 bg-slate-200"
+                    >
+                        <img :src="catImage(cat)" @error="onCatImageError($event, idx)" class="object-cover w-full h-full" :alt="cat.name" />
                         <div class="absolute inset-0 flex flex-col justify-end p-8 collection-overlay">
                             <h3 class="mb-1 text-2xl font-bold text-white">{{ cat.name }}</h3>
                             <p class="text-sm font-medium text-blue-100">{{ cat.name_en }}</p>
@@ -157,7 +201,7 @@ const submitSearch = () => {
                     <!-- Total Widget -->
                     <div class="relative overflow-hidden rounded-[2rem] bg-[#1e3a8a] p-8 text-white shadow-xl shadow-blue-900/20">
                         <i class="absolute fas fa-graduation-cap -bottom-6 -right-6 rotate-12 text-9xl opacity-10"></i>
-                        <h3 class="relative z-10 mb-1 text-xs font-black uppercase tracking-widest text-blue-200/80">ทรัพยากรทั้งหมด</h3>
+                        <h3 class="relative z-10 mb-1 text-xs font-black tracking-widest uppercase text-blue-200/80">ทรัพยากรทั้งหมด</h3>
                         <p class="relative z-10 text-4xl font-black">{{ stats.total.toLocaleString() }}</p>
                         <p class="relative z-10 mt-2 text-sm text-blue-200/80">รายการที่เผยแพร่แล้วในคลัง</p>
                     </div>
@@ -315,3 +359,14 @@ const submitSearch = () => {
 
     </PublicLayout>
 </template>
+
+<style scoped>
+/* hide the scrollbar on the category slider (still scrollable by drag / buttons / wheel) */
+.cat-slider {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.cat-slider::-webkit-scrollbar {
+    display: none;
+}
+</style>
