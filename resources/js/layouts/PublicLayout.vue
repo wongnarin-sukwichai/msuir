@@ -3,10 +3,11 @@ import CookieBanner from '@/components/CookieBanner.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 import LoginModal from '@/components/LoginModal.vue';
 import PublicNavbar from '@/components/PublicNavbar.vue';
+import { useLoginGate } from '@/composables/useLoginGate';
 import { Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
 
-const isLoginModalOpen = ref(false);
+// Shared with the pages via a module singleton (see useLoginGate).
+const { modalOpen: isLoginModalOpen } = useLoginGate();
 </script>
 
 <template>

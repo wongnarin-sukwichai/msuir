@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ItemController extends Controller
 {
@@ -48,10 +51,32 @@ class ItemController extends Controller
                 'abstract' => $item->description,
                 'keywords' => $item->subjects->pluck('value')->values()->all(),
                 'rights' => $item->rights,
-                'fulltext_url' => $item->fulltext,
+                // The URL itself is never sent to the browser — download goes through the auth-gated proxy.
+                'has_fulltext' => $item->fulltext_url !== null || $item->fulltext_path !== null,
                 'collection' => ['id' => $item->collection_id, 'name' => $collectionName],
             ],
             'relatedItems' => $related,
         ]);
+    }
+
+    /**
+     * Auth-gated full-text access. Guests hit the `auth` middleware first and are
+     * redirected to /login; logged-in users get the file (or a redirect to the
+     * external URL).
+     */
+    public function download(int $id): RedirectResponse|StreamedResponse
+    {
+        $item = Item::where('status', 'approved')->findOrFail($id);
+
+        // TODO(stats): record a 'download' event here once item_events exists.
+
+        if ($item->fulltext_path && Storage::disk('public')->exists($item->fulltext_path)) {
+            return Storage::disk('public')->download($item->fulltext_path);
+        }
+        if ($item->fulltext_url) {
+            return redirect()->away($item->fulltext_url);
+        }
+
+        abort(404, 'ไม่มีไฟล์ฉบับเต็มสำหรับรายการนี้');
     }
 }

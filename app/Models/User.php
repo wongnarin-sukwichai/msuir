@@ -29,6 +29,7 @@ class User extends Authenticatable
         'status',
         'is_msu_member',
         'department_id',
+        'institution',
     ];
 
     public function department(): BelongsTo

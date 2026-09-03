@@ -16,6 +16,7 @@ interface Member {
     is_msu_member: boolean;
     department_id: number | null;
     department_name: string | null;
+    institution: string | null;
     status: 'active' | 'suspended';
 }
 
@@ -28,6 +29,7 @@ interface NewMember {
     is_msu_member: boolean;
     role_level: 1 | 2 | 3;
     department_id: number | null;
+    institution: string; // ใช้เมื่อเป็นบุคคลภายนอก (สถานศึกษา/หน่วยงานต้นสังกัด)
     name: string;
     email_local: string; // ใช้เมื่อเป็นสมาชิก มมส. (ต่อท้าย @msu.ac.th ตอน submit)
     email: string; // ใช้เมื่อไม่ใช่สมาชิก มมส. (กรอกเต็ม)
@@ -39,6 +41,7 @@ interface EditMember {
     is_msu_member: boolean;
     role_level: 1 | 2 | 3;
     department_id: number | null;
+    institution: string;
     name: string;
     email_local: string;
     email: string;
@@ -179,15 +182,17 @@ const searchQuery = ref<string>('');
 const isSidebarCollapsed = ref<boolean>(false); // สำหรับการพับ-กาง Sidebar บน PC
 
 // --- Form State (For adding a new member) ---
-const newMember = ref<NewMember>({
+const blankNewMember = (): NewMember => ({
     is_msu_member: true,
     role_level: 1,
     department_id: null,
+    institution: '',
     name: '',
     email_local: '',
     email: '',
     password: '',
 });
+const newMember = ref<NewMember>(blankNewMember());
 
 // --- Form State (For editing an existing member) ---
 const editMember = ref<EditMember>({
@@ -195,6 +200,7 @@ const editMember = ref<EditMember>({
     is_msu_member: true,
     role_level: 1,
     department_id: null,
+    institution: '',
     name: '',
     email_local: '',
     email: '',
@@ -228,7 +234,8 @@ const filteredMembers = computed(() => {
         return (
             member.name.toLowerCase().includes(q) ||
             member.email.toLowerCase().includes(q) ||
-            (member.department_name ?? '').toLowerCase().includes(q)
+            (member.department_name ?? '').toLowerCase().includes(q) ||
+            (member.institution ?? '').toLowerCase().includes(q)
         );
     });
 });
@@ -609,7 +616,8 @@ const handleCreateMember = () => {
         {
             is_msu_member: isMsu,
             role_level: newMember.value.role_level,
-            department_id: newMember.value.department_id,
+            department_id: isMsu ? newMember.value.department_id : null,
+            institution: isMsu ? '' : newMember.value.institution,
             name: newMember.value.name,
             email,
             password: isMsu ? '' : newMember.value.password,
@@ -618,11 +626,11 @@ const handleCreateMember = () => {
             preserveScroll: true,
             onSuccess: () => {
                 isAddMemberModalOpen.value = false;
-                newMember.value = { is_msu_member: true, role_level: 1, department_id: null, name: '', email_local: '', email: '', password: '' };
+                newMember.value = blankNewMember();
                 triggerToast('เพิ่มสมาชิกใหม่สำเร็จ', 'success');
             },
-            onError: () => {
-                triggerToast('เพิ่มสมาชิกไม่สำเร็จ กรุณาตรวจสอบข้อมูล', 'danger');
+            onError: (errors) => {
+                triggerToast(Object.values(errors)[0] ?? 'เพิ่มสมาชิกไม่สำเร็จ กรุณาตรวจสอบข้อมูล', 'danger');
             },
         },
     );
@@ -634,6 +642,7 @@ const handleOpenEditMember = (member: Member) => {
         is_msu_member: member.is_msu_member,
         role_level: member.role_level as 1 | 2 | 3,
         department_id: member.department_id,
+        institution: member.institution ?? '',
         name: member.name,
         email_local: member.is_msu_member ? member.email.replace(/@msu\.ac\.th$/, '') : '',
         email: member.is_msu_member ? '' : member.email,
@@ -656,7 +665,8 @@ const handleUpdateMember = () => {
         {
             is_msu_member: isMsu,
             role_level: editMember.value.role_level,
-            department_id: editMember.value.department_id,
+            department_id: isMsu ? editMember.value.department_id : null,
+            institution: isMsu ? '' : editMember.value.institution,
             name: editMember.value.name,
             email,
             password: isMsu ? '' : editMember.value.password,
@@ -667,8 +677,8 @@ const handleUpdateMember = () => {
                 isEditMemberModalOpen.value = false;
                 triggerToast('บันทึกข้อมูลสมาชิกสำเร็จ', 'success');
             },
-            onError: () => {
-                triggerToast('บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบข้อมูล', 'danger');
+            onError: (errors) => {
+                triggerToast(Object.values(errors)[0] ?? 'บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบข้อมูล', 'danger');
             },
         },
     );
@@ -1910,6 +1920,12 @@ watch(isEditMemberModalOpen, (newVal) => {
                                         >
                                             <i class="fa-solid fa-check mr-1.5"></i>อนุมัติ
                                         </button>
+                                        <Link
+                                            :href="route('admin.repository.items.edit', item.id)"
+                                            class="flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-600 transition-all hover:border-blue-300 hover:text-[#1e3a8a] active:scale-95"
+                                        >
+                                            <i class="fa-solid fa-pen mr-1.5"></i>แก้ไข
+                                        </Link>
                                         <button
                                             @click="handleQueueReturn(item)"
                                             class="flex items-center rounded-xl border border-red-200 bg-white px-4 py-2.5 text-xs font-black text-red-600 transition-all hover:bg-red-50 active:scale-95"
@@ -2042,7 +2058,7 @@ watch(isEditMemberModalOpen, (newVal) => {
                                     <th class="px-6 py-5">ชื่อ-นามสกุล</th>
                                     <th class="px-6 py-5">อีเมลติดต่อ</th>
                                     <th class="px-6 py-5">บทบาท</th>
-                                    <th class="px-6 py-5">หน่วยงาน/คณะ</th>
+                                    <th class="px-6 py-5">หน่วยงาน / สถานศึกษา</th>
                                     <th class="px-6 py-5">สถานะบัญชี</th>
                                     <th class="px-6 py-5 text-center">สวมสิทธิ์</th>
                                     <th class="px-6 py-5 text-center">จัดการ</th>
@@ -2064,7 +2080,7 @@ watch(isEditMemberModalOpen, (newVal) => {
                                                 {{ (roleMeta[member.role_level] ?? roleMeta[1]).label }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 text-xs font-bold text-slate-500">{{ member.department_name || '-' }}</td>
+                                        <td class="px-6 py-4 text-xs font-bold text-slate-500">{{ member.department_name || member.institution || '-' }}</td>
                                         <td class="px-6 py-4">
                                             <button
                                                 @click="handleToggleUserStatus(member)"
@@ -2336,13 +2352,23 @@ watch(isEditMemberModalOpen, (newVal) => {
                                 />
                             </div>
                             <div>
-                                <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">หน่วยงาน/คณะ</label>
+                                <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">
+                                    {{ newMember.is_msu_member ? 'หน่วยงาน/คณะ' : 'สถานศึกษา' }}
+                                </label>
                                 <ModernSelect
+                                    v-if="newMember.is_msu_member"
                                     v-model="newMember.department_id"
                                     :options="[
                                         { value: null, label: 'ไม่ระบุ' },
                                         ...props.departments.map((dep) => ({ value: dep.id, label: dep.name })),
                                     ]"
+                                />
+                                <input
+                                    v-else
+                                    type="text"
+                                    placeholder="เช่น มหาวิทยาลัยขอนแก่น / โรงเรียนสารคามพิทยาคม"
+                                    v-model="newMember.institution"
+                                    class="w-full px-4 py-3.5 text-sm font-bold border outline-none rounded-2xl border-slate-200 bg-slate-50 placeholder:text-slate-300 focus:border-blue-900 focus:bg-white focus:ring-4 focus:ring-blue-900/5"
                                 />
                             </div>
                         </div>
@@ -2482,13 +2508,23 @@ watch(isEditMemberModalOpen, (newVal) => {
                                 />
                             </div>
                             <div>
-                                <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">หน่วยงาน/คณะ</label>
+                                <label class="block mb-2 text-xs font-black tracking-widest uppercase text-slate-400">
+                                    {{ editMember.is_msu_member ? 'หน่วยงาน/คณะ' : 'สถานศึกษา' }}
+                                </label>
                                 <ModernSelect
+                                    v-if="editMember.is_msu_member"
                                     v-model="editMember.department_id"
                                     :options="[
                                         { value: null, label: 'ไม่ระบุ' },
                                         ...props.departments.map((dep) => ({ value: dep.id, label: dep.name })),
                                     ]"
+                                />
+                                <input
+                                    v-else
+                                    type="text"
+                                    placeholder="เช่น มหาวิทยาลัยขอนแก่น / โรงเรียนสารคามพิทยาคม"
+                                    v-model="editMember.institution"
+                                    class="w-full px-4 py-3.5 text-sm font-bold border outline-none rounded-2xl border-slate-200 bg-slate-50 placeholder:text-slate-300 focus:border-blue-900 focus:bg-white focus:ring-4 focus:ring-blue-900/5"
                                 />
                             </div>
                         </div>

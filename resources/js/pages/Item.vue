@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import PublicLayout from '@/layouts/PublicLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { useLoginGate } from '@/composables/useLoginGate';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 
 // --- Types ---
 interface RelatedItem {
@@ -25,7 +26,7 @@ interface Item {
     abstract?: string | null;
     keywords: string[];
     rights?: string | null;
-    fulltext_url?: string | null;
+    has_fulltext: boolean;
     collection: { id: number; name: string | null };
 }
 
@@ -54,6 +55,17 @@ const copyCitation = async (type: string, text: string) => {
     await navigator.clipboard.writeText(text);
     copiedCitation.value = type;
     setTimeout(() => (copiedCitation.value = null), 2000);
+};
+
+// Full-text is login-gated: block the link for guests, show a message + login modal.
+const page = usePage();
+const isLoggedIn = computed(() => !!(page.props.auth as { user?: unknown } | undefined)?.user);
+const { requireLogin } = useLoginGate();
+const onFulltextClick = (e: MouseEvent) => {
+    if (!isLoggedIn.value) {
+        e.preventDefault();
+        requireLogin();
+    }
 };
 </script>
 
@@ -94,10 +106,11 @@ const copyCitation = async (type: string, text: string) => {
                     <!-- Action Buttons -->
                     <div class="mt-4 space-y-2.5">
                         <a
-                            v-if="item.fulltext_url"
-                            :href="item.fulltext_url"
+                            v-if="item.has_fulltext"
+                            :href="route('item.download', item.id)"
                             target="_blank"
                             rel="noopener"
+                            @click="onFulltextClick"
                             class="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[#1e3a8a] py-3.5 text-sm font-black text-white shadow-lg shadow-blue-900/20 transition-all hover:bg-blue-800 active:scale-95"
                         >
                             <i class="fas fa-download"></i>
@@ -106,6 +119,9 @@ const copyCitation = async (type: string, text: string) => {
                         <div v-else class="flex w-full items-center justify-center gap-2 py-3.5 text-sm font-bold rounded-2xl bg-slate-100 text-slate-400">
                             <i class="fas fa-ban"></i> ยังไม่มีไฟล์ฉบับเต็ม
                         </div>
+                        <p v-if="item.has_fulltext" class="text-center text-[11px] font-bold text-slate-400">
+                            <i class="fas fa-lock mr-1 text-[9px]"></i> ต้องเข้าสู่ระบบก่อนดาวน์โหลด
+                        </p>
                     </div>
 
                     <!-- Quick metadata (mobile only shows, desktop always shows) -->
@@ -266,10 +282,11 @@ const copyCitation = async (type: string, text: string) => {
                         <!-- Tab: Full text file -->
                         <div v-else-if="activeTab === 'file'" class="p-6">
                             <a
-                                v-if="item.fulltext_url"
-                                :href="item.fulltext_url"
+                                v-if="item.has_fulltext"
+                                :href="route('item.download', item.id)"
                                 target="_blank"
                                 rel="noopener"
+                                @click="onFulltextClick"
                                 class="group flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-4 transition-all hover:border-blue-100 hover:bg-blue-50/30"
                             >
                                 <div class="flex items-center justify-center w-12 h-12 text-xl text-red-400 transition shrink-0 rounded-xl bg-red-50 group-hover:bg-red-100">
@@ -277,7 +294,7 @@ const copyCitation = async (type: string, text: string) => {
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm font-bold text-slate-800">เอกสารฉบับเต็ม (PDF)</p>
-                                    <p class="mt-0.5 text-xs text-slate-400 truncate">{{ item.fulltext_url }}</p>
+                                    <p class="mt-0.5 text-xs text-slate-400"><i class="fas fa-lock mr-1 text-[9px]"></i> ต้องเข้าสู่ระบบก่อนเปิดไฟล์</p>
                                 </div>
                                 <span class="flex items-center gap-1.5 rounded-lg bg-[#1e3a8a] px-4 py-2 text-xs font-black text-white shrink-0">
                                     <i class="fas fa-arrow-up-right-from-square text-[10px]"></i> เปิด

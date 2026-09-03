@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PublicLayout from '@/layouts/PublicLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { useLoginGate } from '@/composables/useLoginGate';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 
 // --- Types ---
@@ -120,6 +121,19 @@ const hasActiveFilters = computed(
 const activeFilterCount = computed(
     () => selectedYears.value.length + selectedFaculties.value.length + (searchQuery.value ? 1 : 0),
 );
+
+// Full-text download is login-gated: signed-in users go to the auth proxy,
+// guests get a message + the login modal.
+const page = usePage();
+const isLoggedIn = computed(() => !!(page.props.auth as { user?: unknown } | undefined)?.user);
+const { requireLogin } = useLoginGate();
+const goDownload = (id: number) => {
+    if (!isLoggedIn.value) {
+        requireLogin();
+        return;
+    }
+    window.location.href = route('item.download', id);
+};
 
 // --- Pagination ---
 const goToPage = (page: number) => {
@@ -453,7 +467,11 @@ const pageNumbers = computed<(number | '...')[]>(() => {
                                             <i class="fas fa-info-circle text-[10px]"></i>
                                             รายละเอียด
                                         </span>
-                                        <button @click.prevent class="flex items-center gap-1.5 rounded-lg bg-[#1e3a8a] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-800 active:scale-95">
+                                        <button
+                                            @click.stop.prevent="goDownload(item.id)"
+                                            title="ต้องเข้าสู่ระบบก่อนดาวน์โหลด"
+                                            class="flex items-center gap-1.5 rounded-lg bg-[#1e3a8a] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-800 active:scale-95"
+                                        >
                                             <i class="fas fa-download text-[10px]"></i>
                                             ดาวน์โหลด
                                         </button>

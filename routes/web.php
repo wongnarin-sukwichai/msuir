@@ -4,7 +4,7 @@ use App\Http\Controllers\Admin\MemberController;
 use App\Http\Controllers\Admin\RepositoryController;
 use App\Http\Controllers\Admin\RepositoryImportController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
@@ -17,21 +17,23 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/collection/{id}', [CollectionController::class, 'show'])->name('collection.show');
 Route::get('/item/{id}', [ItemController::class, 'show'])->name('item.show');
+// Full-text access requires login — guests are redirected to /login (intended URL kept).
+Route::get('/item/{id}/download', [ItemController::class, 'download'])->middleware('auth')->name('item.download');
 
 // สำหรับ Email/Password ปกติ
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-// สำหรับ Google OAuth
-Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle'])->name('google.redirect');
-Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback'])->name('google.callback');
+// Google OAuth — single implementation lives in SocialiteController (callback route is in routes/auth.php).
+Route::get('/auth/google/redirect', [SocialiteController::class, 'redirectToGoogle'])->name('google.redirect');
 
 Route::get('dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified', 'role:2'])->name('dashboard');
 
 Route::post('/impersonate/leave', [ImpersonateController::class, 'leave'])
     ->middleware('auth')->name('impersonate.leave');
 
-// Repository — add / edit one item. staff + admin (edit is further gated to the owner while pending).
+// Repository — add / edit one item. staff + admin (edit is further gated in the controller
+// to the owner while the item is still pending / action_required).
 Route::middleware(['auth', 'verified', 'role:2'])->prefix('admin')->name('admin.')->group(function () {
     Route::post('/repository/items', [RepositoryController::class, 'store'])->name('repository.items.store');
     Route::get('/repository/items/{item}/edit', [RepositoryController::class, 'edit'])->name('repository.items.edit');

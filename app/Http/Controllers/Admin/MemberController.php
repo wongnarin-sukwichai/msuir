@@ -26,7 +26,8 @@ class MemberController extends Controller
             ],
             'password' => [$isMsuMember ? 'nullable' : 'required', Rules\Password::defaults()],
             'role_level' => 'required|in:1,2,3',
-            'department_id' => 'nullable|exists:deps,id',
+            'department_id' => 'nullable|integer|exists:deps,id',
+            'institution' => 'nullable|string|max:255',
         ]);
 
         User::create([
@@ -35,7 +36,8 @@ class MemberController extends Controller
             'password' => $isMsuMember ? null : Hash::make($validated['password']),
             'role_level' => $validated['role_level'],
             'is_msu_member' => $isMsuMember,
-            'department_id' => $validated['department_id'] ?? null,
+            'department_id' => $isMsuMember ? ($validated['department_id'] ?? null) : null,
+            'institution' => $isMsuMember ? null : ($validated['institution'] ?? null),
             'status' => 'active',
         ]);
 
@@ -55,7 +57,8 @@ class MemberController extends Controller
             ],
             'password' => ['nullable', Rule::when($request->filled('password'), [Rules\Password::defaults()])],
             'role_level' => 'required|in:1,2,3',
-            'department_id' => 'nullable|exists:deps,id',
+            'department_id' => 'nullable|integer|exists:deps,id',
+            'institution' => 'nullable|string|max:255',
         ]);
 
         $updateData = [
@@ -63,7 +66,8 @@ class MemberController extends Controller
             'email' => $validated['email'],
             'role_level' => $validated['role_level'],
             'is_msu_member' => $isMsuMember,
-            'department_id' => $validated['department_id'] ?? null,
+            'department_id' => $isMsuMember ? ($validated['department_id'] ?? null) : null,
+            'institution' => $isMsuMember ? null : ($validated['institution'] ?? null),
         ];
 
         if ($isMsuMember) {

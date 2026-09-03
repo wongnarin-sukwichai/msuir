@@ -27,6 +27,7 @@ class DashboardController extends Controller
                 'is_msu_member' => $u->is_msu_member,
                 'department_id' => $u->department_id,
                 'department_name' => $u->department?->name,
+                'institution' => $u->institution,
                 'status' => $u->status,
             ])
             : [];
@@ -102,7 +103,8 @@ class DashboardController extends Controller
     /**
      * Flow E — the "คิวตรวจสอบข้อมูล" tab.
      *   admin → every item still pending / needing changes, with owner name.
-     *   staff → their own items (all statuses), read-only, with the admin's note.
+     *   staff → their own items (all statuses), read-only, with the admin's note +
+     *           an "แก้ไข" link when the item is action_required.
      */
     private function queuePayload(bool $isAdmin, int $userId): array
     {

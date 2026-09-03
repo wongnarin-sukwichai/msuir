@@ -221,6 +221,7 @@ class RepositoryController extends Controller
         }
     }
 
+    /** Admin may edit any item; the owner may edit theirs while pending / action_required. */
     private function authorizeItemEdit(Request $request, Item $item): void
     {
         $isAdmin = (int) $request->user()->role_level >= 3;

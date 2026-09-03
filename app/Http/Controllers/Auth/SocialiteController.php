@@ -37,21 +37,23 @@ class SocialiteController extends Controller
             return redirect()->route('login')->with('status', 'ขออภัย! ระบบนี้อนุญาตเฉพาะบุคลากรที่ใช้ @msu.ac.th เท่านั้น');
         }
 
-        // ตรวจสอบในฐานข้อมูล: ถ้ามีอยู่แล้วให้ Update ถ้าไม่มีให้ Create
-        $user = User::updateOrCreate([
-            'email' => $googleUser->getEmail(),
-        ], [
-            'name' => $googleUser->getName(),
-            'provider' => 'google',
-            'provider_id' => $googleUser->getId(),
-            // role_level จะถูกตั้งเป็น 1 โดย default จากฐานข้อมูลที่เราตั้งไว้
-            // และจะไม่ทับค่าเดิมหากผู้ใช้คนนั้นมีระดับสูงกว่า 1 อยู่แล้ว
-        ]);
+        // ถ้ามีอยู่แล้วให้ update ข้อมูลโปรไฟล์; ถ้าไม่มีให้สร้างใหม่
+        // role_level ใช้ค่า default ของคอลัมน์ (= 1 สมาชิกทั่วไป) และจะไม่ทับของเดิมที่สูงกว่า
+        $user = User::updateOrCreate(
+            ['email' => $googleUser->getEmail()],
+            [
+                'name' => $googleUser->getName(),
+                'provider' => 'google',
+                'provider_id' => $googleUser->getId(),
+                'email_verified_at' => now(),
+            ],
+        )->refresh();
 
-        // สั่งให้ระบบทำการ Login
-        Auth::login($user);
+        Auth::login($user, remember: true);
 
-        // ส่งไปยังหน้า Dashboard หลังจาก Login สำเร็จ
-        return redirect()->intended(route('dashboard', absolute: false));
+        // staff/admin → หลังบ้าน; สมาชิกทั่วไป → หน้าแรก
+        return (int) $user->role_level >= 2
+            ? redirect()->intended(route('dashboard', absolute: false))
+            : redirect()->intended('/')->with('status', 'เข้าสู่ระบบสำเร็จ');
     }
 }
