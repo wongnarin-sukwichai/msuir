@@ -12,7 +12,7 @@ interface Member {
     id: number;
     name: string;
     email: string;
-    role_level: number; // 1 = สมาชิกทั่วไป, 3 = ผู้ดูแลระบบ
+    role_level: number; // 1 = สมาชิกทั่วไป, 2 = เจ้าหน้าที่, 3 = ผู้ดูแลระบบ
     is_msu_member: boolean;
     department_id: number | null;
     department_name: string | null;
@@ -26,7 +26,7 @@ interface Department {
 
 interface NewMember {
     is_msu_member: boolean;
-    role_level: 1 | 3;
+    role_level: 1 | 2 | 3;
     department_id: number | null;
     name: string;
     email_local: string; // ใช้เมื่อเป็นสมาชิก มมส. (ต่อท้าย @msu.ac.th ตอน submit)
@@ -37,7 +37,7 @@ interface NewMember {
 interface EditMember {
     id: number;
     is_msu_member: boolean;
-    role_level: 1 | 3;
+    role_level: 1 | 2 | 3;
     department_id: number | null;
     name: string;
     email_local: string;
@@ -207,6 +207,13 @@ const toast = ref<Toast>({
     message: '',
     type: 'success',
 });
+
+// --- Member role badge (1 = สมาชิกทั่วไป, 2 = เจ้าหน้าที่, 3 = ผู้ดูแลระบบ) ---
+const roleMeta: Record<number, { label: string; cls: string }> = {
+  1: { label: 'สมาชิกทั่วไป', cls: 'bg-slate-100 text-slate-700' },
+  2: { label: 'เจ้าหน้าที่', cls: 'bg-blue-50 text-blue-700' },
+  3: { label: 'ผู้ดูแลระบบ', cls: 'bg-red-50 text-red-700' },
+};
 
 // --- Status badge label/colour, shared by every repository/queue view ---
 const statusMeta: Record<ItemStatus, { label: string; cls: string }> = {
@@ -625,7 +632,7 @@ const handleOpenEditMember = (member: Member) => {
     editMember.value = {
         id: member.id,
         is_msu_member: member.is_msu_member,
-        role_level: member.role_level as 1 | 3,
+        role_level: member.role_level as 1 | 2 | 3,
         department_id: member.department_id,
         name: member.name,
         email_local: member.is_msu_member ? member.email.replace(/@msu\.ac\.th$/, '') : '',
@@ -2051,10 +2058,10 @@ watch(isEditMemberModalOpen, (newVal) => {
                                             <span
                                                 :class="[
                                                     'rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider',
-                                                    member.role_level === 3 ? 'bg-red-50 text-red-700' : 'bg-slate-100 text-slate-700',
+                                                    (roleMeta[member.role_level] ?? roleMeta[1]).cls,
                                                 ]"
                                             >
-                                                {{ member.role_level === 3 ? 'ผู้ดูแลระบบ' : 'สมาชิกทั่วไป' }}
+                                                {{ (roleMeta[member.role_level] ?? roleMeta[1]).label }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 text-xs font-bold text-slate-500">{{ member.department_name || '-' }}</td>
@@ -2075,7 +2082,7 @@ watch(isEditMemberModalOpen, (newVal) => {
                                             <div class="flex items-center justify-center">
                                                 <button
                                                     @click="handleImpersonate(member)"
-                                                    :disabled="member.id === currentUserId || member.role_level === 3 || member.status !== 'active'"
+                                                    :disabled="member.id === currentUserId || member.role_level >= 2 || member.status !== 'active'"
                                                     class="flex items-center justify-center w-8 h-8 text-blue-700 transition-all rounded-full bg-blue-50 hover:bg-blue-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-blue-50 disabled:hover:text-blue-700"
                                                     title="สวมสิทธิ์เข้าสู่ระบบในฐานะสมาชิกคนนี้"
                                                 >
@@ -2323,6 +2330,7 @@ watch(isEditMemberModalOpen, (newVal) => {
                                     v-model="newMember.role_level"
                                     :options="[
                                         { value: 1, label: 'สมาชิกทั่วไป' },
+                                        { value: 2, label: 'เจ้าหน้าที่' },
                                         { value: 3, label: 'ผู้ดูแลระบบ' },
                                     ]"
                                 />
@@ -2468,6 +2476,7 @@ watch(isEditMemberModalOpen, (newVal) => {
                                     v-model="editMember.role_level"
                                     :options="[
                                         { value: 1, label: 'สมาชิกทั่วไป' },
+                                        { value: 2, label: 'เจ้าหน้าที่' },
                                         { value: 3, label: 'ผู้ดูแลระบบ' },
                                     ]"
                                 />

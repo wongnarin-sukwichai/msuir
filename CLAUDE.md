@@ -17,7 +17,7 @@ Laravel 12 + Inertia.js v2 + Vue 3 (TypeScript) + Tailwind CSS. XAMPP/MySQL loca
 ## Data model built so far
 
 **`users` table** (extended from the starter kit's default):
-- `role_level` (tinyint, pre-existing): 1 = สมาชิกทั่วไป, 3 = ผู้ดูแลระบบ (level 2/staff exists in DB but UI only exposes 1 and 3)
+- `role_level` (tinyint): 1 = สมาชิกทั่วไป, 2 = เจ้าหน้าที่ (staff), 3 = ผู้ดูแลระบบ — **all three are now selectable** in the add/edit member modal (`MemberController` validates `in:1,2,3`); table badge via `roleMeta` map. Impersonate is blocked for `role_level >= 2` (front `:disabled` + back `abort_if`), i.e. only plain members can be impersonated.
 - `status`: `'active' | 'suspended'`, toggled by clicking the status badge in the members table (not a separate icon anymore)
 - `is_msu_member` (boolean): true = มมส. (@msu.ac.th, logs in via Google OAuth, no password), false = บุคคลภายนอก (full email + password)
 - `department_id` (nullable FK → `deps.id`, `nullOnDelete`)

@@ -25,7 +25,7 @@ class MemberController extends Controller
                 Rule::when($isMsuMember, ['ends_with:@msu.ac.th']),
             ],
             'password' => [$isMsuMember ? 'nullable' : 'required', Rules\Password::defaults()],
-            'role_level' => 'required|in:1,3',
+            'role_level' => 'required|in:1,2,3',
             'department_id' => 'nullable|exists:deps,id',
         ]);
 
@@ -54,7 +54,7 @@ class MemberController extends Controller
                 Rule::when($isMsuMember, ['ends_with:@msu.ac.th']),
             ],
             'password' => ['nullable', Rule::when($request->filled('password'), [Rules\Password::defaults()])],
-            'role_level' => 'required|in:1,3',
+            'role_level' => 'required|in:1,2,3',
             'department_id' => 'nullable|exists:deps,id',
         ]);
 
@@ -98,7 +98,7 @@ class MemberController extends Controller
     public function impersonate(User $member): RedirectResponse
     {
         abort_if($member->id === Auth::id(), 403, 'ไม่สามารถสวมสิทธิ์บัญชีตนเองได้');
-        abort_if($member->role_level == 3, 403, 'ไม่สามารถสวมสิทธิ์ผู้ดูแลระบบคนอื่นได้');
+        abort_if($member->role_level >= 2, 403, 'สวมสิทธิ์ได้เฉพาะบัญชีสมาชิกทั่วไป');
         abort_if($member->status !== 'active', 403, 'ไม่สามารถสวมสิทธิ์บัญชีที่ถูกระงับการใช้งาน');
 
         session(['impersonator_id' => Auth::id()]);
