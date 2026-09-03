@@ -57,7 +57,7 @@ class HandleInertiaRequests extends Middleware
                 ->map(fn ($cat) => [
                     'title' => $cat->name_en,
                     'links' => $cat->collections
-                        ->map(fn ($c) => ['name' => $c->name_th ?: $c->name_en, 'href' => "/collection/{$c->id}"])
+                        ->map(fn ($c) => ['name' => $c->name_th ?: $c->name_en, 'href' => route('collection.show', $c->id)])
                         ->all(),
                 ])->all(),
         ]);

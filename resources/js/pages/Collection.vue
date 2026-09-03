@@ -164,7 +164,7 @@ const pageNumbers = computed<(number | '...')[]>(() => {
             <div class="px-4 py-3 mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <ol class="flex items-center space-x-2 text-sm">
                     <li>
-                        <Link href="/" class="font-medium transition-colors text-slate-500 hover:text-blue-800">
+                        <Link :href="route('home')" class="font-medium transition-colors text-slate-500 hover:text-blue-800">
                             <i class="fas fa-home mr-1.5 text-xs"></i>หน้าแรก
                         </Link>
                     </li>

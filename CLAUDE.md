@@ -2,6 +2,8 @@
 
 Laravel 12 + Inertia.js v2 + Vue 3 (TypeScript) + Tailwind CSS. XAMPP/MySQL locally, DB name `msuir_db`.
 
+**Deploy target = a sub-directory:** `https://golden.msu.ac.th/msuir/`. `AppServiceProvider::boot()` calls `URL::forceRootUrl(config('app.url'))` whenever `APP_URL` contains a path (+ `forceScheme('https')` for https URLs) — so on the server set `.env` `APP_URL=https://golden.msu.ac.th/msuir` and every `route()`/`asset()`/Ziggy URL is prefixed with `/msuir`. Local dev `APP_URL=http://localhost:8000` has no path → untouched. **Never hard-code absolute paths** (`href="/"`, `"/collection/{id}"`) in Vue or shared props — always `route('home')` / `route('collection.show', $id)`; the `publicNav` shared prop and every breadcrumb/logo link already use `route()`.
+
 ## Conventions established so far
 
 - **Admin backend is one file**: `resources/js/pages/Dashboard.vue` — sidebar + all tabs (dashboard/repository/approvals/analytics/members/settings) live in this single SFC via `activeTab` ref, not separate routed pages. No shared `AppSidebarLayout` is used here (that layout exists in `resources/js/layouts/app/` but is currently disconnected/unused).

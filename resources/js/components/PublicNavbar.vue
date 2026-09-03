@@ -16,7 +16,7 @@ interface NavLink {
 }
 
 const navLinks: NavLink[] = [
-    { name: 'Home', href: '/' },
+    { name: 'Home', href: route('home') },
     { name: 'Collection', href: '#' },
     { name: 'About', href: '#' },
     { name: 'Contact', href: '#' },
@@ -39,7 +39,7 @@ watch(isMobileMenuOpen, (val) => {
         <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
                 <div class="flex items-center space-x-4 shrink-0">
-                    <a href="/" class="flex items-center space-x-4">
+                    <a :href="route('home')" class="flex items-center space-x-4">
                         <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#1e3a8a] text-xl font-black text-white shadow-lg shadow-blue-900/20">
                             M
                         </div>

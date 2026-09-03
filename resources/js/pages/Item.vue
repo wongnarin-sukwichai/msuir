@@ -77,7 +77,7 @@ const onFulltextClick = (e: MouseEvent) => {
         <div class="bg-white border-b border-slate-100">
             <div class="px-4 py-3 mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <ol class="flex flex-wrap items-center gap-2 text-sm">
-                    <li><Link href="/" class="font-medium transition-colors text-slate-500 hover:text-blue-800"><i class="fas fa-home mr-1.5 text-xs"></i>หน้าแรก</Link></li>
+                    <li><Link :href="route('home')" class="font-medium transition-colors text-slate-500 hover:text-blue-800"><i class="fas fa-home mr-1.5 text-xs"></i>หน้าแรก</Link></li>
                     <li><i class="fas fa-chevron-right text-[9px] text-slate-300"></i></li>
                     <li><Link :href="route('collection.show', item.collection.id)" class="font-medium transition-colors text-slate-500 hover:text-blue-800">{{ item.collection.name }}</Link></li>
                     <li><i class="fas fa-chevron-right text-[9px] text-slate-300"></i></li>
