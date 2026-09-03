@@ -24,7 +24,7 @@ class RepositoryImportController extends Controller
     public function template(): BinaryFileResponse
     {
         return response()->download(
-            storage_path('app/templates/elementmsuir-template.csv'),
+            base_path('database/data/elementmsuir-template.csv'),
             'elementmsuir-template.csv',
             ['Content-Type' => 'text/csv; charset=UTF-8'],
         );
